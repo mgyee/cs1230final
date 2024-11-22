@@ -75,5 +75,20 @@ private:
     Cylinder cylinder;
     Sphere sphere;
 
+    GLuint m_fullscreen_vbo;
+    GLuint m_fullscreen_vao;
+
+    void makeFBO();
+
+    GLuint m_fbo_texture;
+    GLuint m_fbo_renderbuffer;
+    GLuint m_fbo;
+    GLuint m_defaultFBO;
+    GLuint m_texture_shader;
+
+    float m_screen_width;
+    float m_screen_height;
+
     void updateVBO();
+    void paintTexture(GLuint texture, bool pixelFilter, bool kernelFilter);
 };

@@ -7,6 +7,8 @@
 #include "settings.h"
 #include "utils/shaderloader.h"
 
+#include <numbers>
+
 // ================== Project 5: Lights, Camera
 
 Realtime::Realtime(QWidget *parent)
@@ -37,11 +39,20 @@ void Realtime::finish() {
 
     glDeleteProgram(m_shader);
 
+    glDeleteProgram(m_texture_shader);
+    glDeleteVertexArrays(1, &m_fullscreen_vao);
+    glDeleteBuffers(1, &m_fullscreen_vbo);
+
+    glDeleteRenderbuffers(1, &m_fbo_renderbuffer);
+    glDeleteFramebuffers(1, &m_fbo);
+
     this->doneCurrent();
 }
 
 void Realtime::initializeGL() {
     m_devicePixelRatio = this->devicePixelRatio();
+
+    m_defaultFBO = 2;
 
     m_timer = startTimer(1000/60);
     m_elapsedTimer.start();
@@ -67,6 +78,7 @@ void Realtime::initializeGL() {
     glClearColor(0, 0, 0, 1);
 
     m_shader = ShaderLoader::createShaderProgram("resources/shaders/default.vert", "resources/shaders/default.frag");
+    m_texture_shader = ShaderLoader::createShaderProgram("resources/shaders/texture.vert", "resources/shaders/texture.frag");
 
     glGenBuffers(1, &m_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
@@ -82,10 +94,102 @@ void Realtime::initializeGL() {
 
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    glUseProgram(m_texture_shader);
+
+    glUniform1i(glGetUniformLocation(m_texture_shader, "sampler"), 0);
+
+    glUseProgram(0);
+
+    std::vector<GLfloat> fullscreen_quad_data =
+        { //     POSITIONS    //
+            -1.f,  1.f, 0.0f,
+            0.f,  1.f, 0.0f,
+
+            -1.f, -1.f, 0.0f,
+            0.f,  0.f, 0.0f,
+
+            1.f, -1.f, 0.0f,
+            1.f,  0.f, 0.0f,
+
+            1.f,  1.f, 0.0f,
+            1.f,  1.f, 0.0f,
+
+            -1.f,  1.f, 0.0f,
+            0.f,  1.f, 0.0f,
+
+            1.f, -1.f, 0.0f,
+            1.f,  0.f, 0.0f
+        };
+
+    glGenBuffers(1, &m_fullscreen_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, m_fullscreen_vbo);
+    glBufferData(GL_ARRAY_BUFFER, fullscreen_quad_data.size()*sizeof(GLfloat), fullscreen_quad_data.data(), GL_STATIC_DRAW);
+    glGenVertexArrays(1, &m_fullscreen_vao);
+    glBindVertexArray(m_fullscreen_vao);
+
+    // Task 14: modify the code below to add a second attribute to the vertex attribute array
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), nullptr);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void*>(3 * sizeof(GLfloat)));
+
+    // Unbind the fullscreen quad's VBO and VAO
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    makeFBO();
+}
+
+void Realtime::makeFBO(){
+    // Task 19: Generate and bind an empty texture, set its min/mag filter interpolation, then unbind
+
+    glGenTextures(1, &m_fbo_texture);
+
+    glActiveTexture(GL_TEXTURE0);
+
+    glBindTexture(GL_TEXTURE_2D, m_fbo_texture);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_screen_width, m_screen_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Task 20: Generate and bind a renderbuffer of the right size, set its format, then unbind
+
+    glGenRenderbuffers(1, &m_fbo_renderbuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, m_fbo_renderbuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_screen_width, m_screen_height);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    // Task 18: Generate and bind an FBO
+
+    glGenFramebuffers(1, &m_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+
+    // Task 21: Add our texture as a color attachment, and our renderbuffer as a depth+stencil attachment, to our FBO
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_fbo_texture, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_fbo_renderbuffer);
+
+    // Task 22: Unbind the FBO
+
+    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+
 }
 
 void Realtime::paintGL() {
     // Students: anything requiring OpenGL calls every frame should be done here
+
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+
+    glViewport(0, 0, m_screen_width, m_screen_height);
+
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -102,26 +206,51 @@ void Realtime::paintGL() {
                            &glm::inverse(glm::transpose(shape.shape.ctm))[0][0]);
 
         glm::vec4 ambient = metaData.globalData.ka * shape.shape.primitive.material.cAmbient;
-        glUniform4f(glGetUniformLocation(m_shader, "ambient"), ambient.r, ambient.g, ambient.b, ambient.a);
+        glUniform4fv(glGetUniformLocation(m_shader, "ambient"), 1, &ambient[0]);
 
         glm::vec4 diffuse = metaData.globalData.kd * shape.shape.primitive.material.cDiffuse;
-        glUniform4f(glGetUniformLocation(m_shader, "diffuse"), diffuse.r, diffuse.g, diffuse.b, diffuse.a);
+        glUniform4fv(glGetUniformLocation(m_shader, "diffuse"), 1, &diffuse[0]);
 
         glm::vec4 specular = metaData.globalData.ks * shape.shape.primitive.material.cSpecular;
-        glUniform4f(glGetUniformLocation(m_shader, "specular"), specular.r, specular.g, specular.b, specular.a);
+        glUniform4fv(glGetUniformLocation(m_shader, "specular"), 1, &specular[0]);
 
         glUniform1f(glGetUniformLocation(m_shader, "shininess"), shape.shape.primitive.material.shininess);
 
         int i = 0;
         for (auto &light: metaData.lights) {
-            if (light.type != LightType::LIGHT_DIRECTIONAL) {
-                continue;
-            }
+
             std::basic_string lightString = "lights[" + std::to_string(i) + "]";
+
             GLint loc = glGetUniformLocation(m_shader, (lightString + ".dir").c_str());
-            glUniform3f(loc, light.dir.x, light.dir.y, light.dir.z);
+            glUniform3fv(loc, 1, &light.dir[0]);
+
+            loc = glGetUniformLocation(m_shader, (lightString + ".pos").c_str());
+            glUniform3fv(loc, 1, &light.pos[0]);
+
             loc = glGetUniformLocation(m_shader, (lightString + ".color").c_str());
-            glUniform4f(loc, light.color.r, light.color.g, light.color.b, light.color.a);
+            glUniform4fv(loc, 1, &light.color[0]);
+
+            loc = glGetUniformLocation(m_shader, (lightString + ".function").c_str());
+            glUniform3fv(loc, 1, &light.function[0]);
+
+            loc = glGetUniformLocation(m_shader, (lightString + ".angle").c_str());
+            glUniform1f(loc, light.angle);
+
+            loc = glGetUniformLocation(m_shader, (lightString + ".penumbra").c_str());
+            glUniform1f(loc, light.penumbra);
+
+            loc = glGetUniformLocation(m_shader, (lightString + ".type").c_str());
+            switch (light.type) {
+                case LightType::LIGHT_DIRECTIONAL:
+                    glUniform1i(loc, 0);
+                    break;
+                case LightType::LIGHT_SPOT:
+                    glUniform1i(loc, 1);
+                    break;
+                case LightType::LIGHT_POINT:
+                    glUniform1i(loc, 2);
+                    break;
+            }
             i++;
         }
         glUniform1i(glGetUniformLocation(m_shader, "lightsCount"), i);
@@ -136,11 +265,48 @@ void Realtime::paintGL() {
     glBindVertexArray(0);
 
     glUseProgram(0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    paintTexture(m_fbo_texture, settings.perPixelFilter, settings.kernelBasedFilter);
+
+}
+
+void Realtime::paintTexture(GLuint texture, bool pixelFilter, bool kernelFilter) {
+    glUseProgram(m_texture_shader);
+    // Task 32: Set your bool uniform on whether or not to filter the texture drawn
+
+    glUniform1i(glGetUniformLocation(m_texture_shader, "pixelFilter"), pixelFilter);
+    glUniform1i(glGetUniformLocation(m_texture_shader, "kernelFilter"), kernelFilter);
+
+    glBindVertexArray(m_fullscreen_vao);
+    // Task 10: Bind "texture" to slot 0
+
+    glActiveTexture(GL_TEXTURE0);
+
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindVertexArray(0);
+    glUseProgram(0);
 }
 
 void Realtime::resizeGL(int w, int h) {
+
+    glDeleteTextures(1, &m_fbo_texture);
+    glDeleteRenderbuffers(1, &m_fbo_renderbuffer);
+    glDeleteFramebuffers(1, &m_fbo);
+
     // Tells OpenGL how big the screen is
     glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
+
+    m_screen_width = size().width() * m_devicePixelRatio;
+    m_screen_height = size().height() * m_devicePixelRatio;
+
+    makeFBO();
 
     // Students: anything requiring OpenGL calls when the program starts should be done here
     aspectRatio = float(w) / float(h);
@@ -242,6 +408,43 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
 
         // Use deltaX and deltaY here to rotate
 
+        if (m_mouseDown) {
+            float x_angle = deltaX * std::numbers::pi / 100.f;
+            glm::vec3 u_x(0, -1, 0);
+            float c_x = glm::cos(x_angle);
+            float s_x = glm::sin(x_angle);
+            float one_minus_c_x = 1.f - c_x;
+
+            glm::vec3 u_y = -glm::normalize(glm::cross(glm::vec3(metaData.cameraData.look),
+                                                                glm::vec3(metaData.cameraData.up)));
+            float y_angle = deltaY * std::numbers::pi / 100.f;
+            float c_y = glm::cos(y_angle);
+            float s_y = glm::sin(y_angle);
+            float one_minus_c_y = 1.f - c_y;
+
+            metaData.cameraData.look = glm::vec4(glm::mat3(c_y + pow(u_y.y,2)*one_minus_c_y,
+                                                           u_y.x*u_y.y*one_minus_c_y+u_y.z*s_y,
+                                                           u_y.x*u_y.z*one_minus_c_y-u_y.y*s_y,
+                                                           u_y.x*u_y.y*one_minus_c_y-u_y.z*s_y,
+                                                           c_y+pow(u_y.y,2)*one_minus_c_y,
+                                                           u_y.y*u_y.z*one_minus_c_y+u_y.x*s_y,
+                                                           u_y.x*u_y.z*one_minus_c_y+u_y.y*s_y,
+                                                           u_y.y*u_y.z*one_minus_c_y-u_y.x*s_y,
+                                                           c_y+pow(u_y.z,2)*one_minus_c_y) *
+                                                glm::mat3(c_x + pow(u_x.x,2)*one_minus_c_x,
+                                                          u_x.x*u_x.y*one_minus_c_x+u_x.z*s_x,
+                                                          u_x.x*u_x.z*one_minus_c_x-u_x.y*s_x,
+                                                          u_x.x*u_x.y*one_minus_c_x-u_x.z*s_x,
+                                                          c_x+pow(u_x.y,2)*one_minus_c_x,
+                                                          u_x.y*u_x.z*one_minus_c_x+u_x.x*s_x,
+                                                          u_x.x*u_x.z*one_minus_c_x+u_x.y*s_x,
+                                                          u_x.y*u_x.z*one_minus_c_x-u_x.x*s_x,
+                                                          c_x+pow(u_x.z,2)*one_minus_c_x) *
+                                                    glm::vec3(metaData.cameraData.look), 1.0);
+
+            m_camera.setViewMatrix(metaData.cameraData.pos, metaData.cameraData.look, metaData.cameraData.up);
+        }
+
         update(); // asks for a PaintGL() call to occur
     }
 }
@@ -252,6 +455,31 @@ void Realtime::timerEvent(QTimerEvent *event) {
     m_elapsedTimer.restart();
 
     // Use deltaTime and m_keyMap here to move around
+
+    float units = 5.f * deltaTime;
+
+    if (m_keyMap[Qt::Key_W]) {
+        metaData.cameraData.pos += units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+    }
+    if (m_keyMap[Qt::Key_A]) {
+        metaData.cameraData.pos -= units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
+                                                      glm::vec3(metaData.cameraData.up)), 0));
+    }
+    if (m_keyMap[Qt::Key_S]) {
+        metaData.cameraData.pos -= units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+    }
+    if (m_keyMap[Qt::Key_D]) {
+        metaData.cameraData.pos += units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
+                                                                glm::vec3(metaData.cameraData.up)), 0));
+    }
+    if (m_keyMap[Qt::Key_Control]) {
+        metaData.cameraData.pos -= units * glm::vec4(0, 1, 0, 0);
+    }
+    if (m_keyMap[Qt::Key_Space]) {
+        metaData.cameraData.pos += units * glm::vec4(0, 1, 0, 0);
+    }
+
+    m_camera.setViewMatrix(metaData.cameraData.pos, metaData.cameraData.look, metaData.cameraData.up);
 
     update(); // asks for a PaintGL() call to occur
 }

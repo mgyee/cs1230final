@@ -275,7 +275,7 @@ void MainWindow::onUploadFile() {
                                                               .append(QDir::separator())
                                                               .append("scenefiles")
                                                               .append(QDir::separator())
-                                                              .append("lights-camera")
+                                                              .append("action")
                                                               .append(QDir::separator())
                                                               .append("required"), tr("Scene Files (*.json)"));
     if (configFilePath.isNull()) {
@@ -302,7 +302,7 @@ void MainWindow::onSaveImage() {
                                                         .append(QDir::separator())
                                                         .append("student_outputs")
                                                         .append(QDir::separator())
-                                                        .append("lights-camera")
+                                                        .append("action")
                                                         .append(QDir::separator())
                                                         .append("required")
                                                         .append(QDir::separator())

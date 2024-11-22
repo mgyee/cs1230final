@@ -19,7 +19,11 @@ void Cone::makeTile(glm::vec3 topLeft,
     glm::vec3 botLeftNormal = glm::normalize(glm::vec3(bottomLeft.x, sqrtf(pow(bottomLeft.x, 2) + pow(bottomLeft.z, 2)) / 2.f, bottomLeft.z));
     glm::vec3 botRightNormal = glm::normalize(glm::vec3(bottomRight.x, sqrtf(pow(bottomRight.x, 2) + pow(bottomRight.z, 2)) / 2.f, bottomRight.z));
     if (topLeft.y == 0.5) {
-        topLeftNormal = glm::normalize(0.5f * (botLeftNormal + botRightNormal));
+        topLeftNormal = 0.5f * (botLeftNormal + botRightNormal);
+        topLeftNormal.y = 0;
+        topLeftNormal = glm::normalize(topLeftNormal);
+        topLeftNormal.y = 0.5;
+        topLeftNormal = glm::normalize(topLeftNormal);
         topRightNormal = topLeftNormal;
     }
 
