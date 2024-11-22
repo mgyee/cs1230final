@@ -37,6 +37,8 @@ Run the program, open the specified `.json` file, follow the instructions to set
 
 ### Design Choices
 
+All shape trimesh things are in shapes/. realtime.cpp has most of the logic. Whenever a setting changes, I recalculate the projection matrix and vbo. When the size changes, I update the aspect ratio and projection matrix. When the scene changes, I update all the camera variables. In initialize GL, I create one vao and one vbo to define the scene. In paintGL, I loop through all my shapes and send relevant data to the GPU (mvp matrix, model matrix, global constants). I also loop through all the lights and send over light directions and colors. In the vertex shader, I calculate the world Pos and Norm as well as set gl_Position. In the frag shader, I calculate the color with the Phong model. I store the light data in an array of Light structs.
+
 ### Collaboration/References
 
 ### Known Bugs
