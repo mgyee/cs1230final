@@ -86,6 +86,8 @@ https://github.com/BrownCSCI1230/projects_realtime_template/assets/45575415/710f
 
 ##### Your Output
 
+https://github.com/user-attachments/assets/a4fdcf78-101e-40f5-a948-a0f886723ae1
+
 <!---
 Paste your output on top of this comment!
 -->
@@ -100,11 +102,17 @@ https://github.com/BrownCSCI1230/projects_realtime_template/assets/45575415/a14f
 
 ##### Your Output
 
+
+https://github.com/user-attachments/assets/667873cc-56f6-48bc-9b9c-d7e3d56a00aa
+
+
 <!---
 Paste your output on top of this comment!
 -->
 
 ### Design Choices
+
+To change default FBO, it's at the top of initializeGL. For lighting, I passed in some more parameters to the shader like angle and penumbra. Then the calculations were similar to project 4. For movement, I modified the pos vector depending on the key pressed, then updated the view matrix and redrew the scene. For panning, I modified the look vector using the Rodrigues matrix. Lastly, for the FBO, I followed a similar way of doing things as lab 11, and added another shader for post processing. Additionally, for the kernel based filter, I used textureSize to find the size of the texture to figure out what uv coordinates I needed to sample the surrounding pixels.
 
 ### Collaboration/References
 
