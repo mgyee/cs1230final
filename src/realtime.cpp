@@ -216,45 +216,6 @@ void Realtime::paintGL() {
 
         glUniform1f(glGetUniformLocation(m_shader, "shininess"), shape.shape.primitive.material.shininess);
 
-        int i = 0;
-        for (auto &light: metaData.lights) {
-
-            std::basic_string lightString = "lights[" + std::to_string(i) + "]";
-
-            GLint loc = glGetUniformLocation(m_shader, (lightString + ".dir").c_str());
-            glUniform3fv(loc, 1, &light.dir[0]);
-
-            loc = glGetUniformLocation(m_shader, (lightString + ".pos").c_str());
-            glUniform3fv(loc, 1, &light.pos[0]);
-
-            loc = glGetUniformLocation(m_shader, (lightString + ".color").c_str());
-            glUniform4fv(loc, 1, &light.color[0]);
-
-            loc = glGetUniformLocation(m_shader, (lightString + ".function").c_str());
-            glUniform3fv(loc, 1, &light.function[0]);
-
-            loc = glGetUniformLocation(m_shader, (lightString + ".angle").c_str());
-            glUniform1f(loc, light.angle);
-
-            loc = glGetUniformLocation(m_shader, (lightString + ".penumbra").c_str());
-            glUniform1f(loc, light.penumbra);
-
-            loc = glGetUniformLocation(m_shader, (lightString + ".type").c_str());
-            switch (light.type) {
-                case LightType::LIGHT_DIRECTIONAL:
-                    glUniform1i(loc, 0);
-                    break;
-                case LightType::LIGHT_SPOT:
-                    glUniform1i(loc, 1);
-                    break;
-                case LightType::LIGHT_POINT:
-                    glUniform1i(loc, 2);
-                    break;
-            }
-            i++;
-        }
-        glUniform1i(glGetUniformLocation(m_shader, "lightsCount"), i);
-
         glm::vec4 camPos = m_camera.getInverseViewMatrix() * glm::vec4(0.0, 0.0, 0.0, 1.0);
 
         glUniform4fv(glGetUniformLocation(m_shader, "camPos"), 1, &camPos[0]);
@@ -324,6 +285,46 @@ void Realtime::sceneChanged() {
     m_camera.setViewMatrix(metaData.cameraData.pos, metaData.cameraData.look, metaData.cameraData.up);
     m_camera.setProjMatrix(settings.nearPlane, settings.farPlane);
     updateVBO();
+    glUseProgram(m_shader);
+    int i = 0;
+    for (auto &light: metaData.lights) {
+
+        std::basic_string lightString = "lights[" + std::to_string(i) + "]";
+
+        GLint loc = glGetUniformLocation(m_shader, (lightString + ".dir").c_str());
+        glUniform3fv(loc, 1, &light.dir[0]);
+
+        loc = glGetUniformLocation(m_shader, (lightString + ".pos").c_str());
+        glUniform3fv(loc, 1, &light.pos[0]);
+
+        loc = glGetUniformLocation(m_shader, (lightString + ".color").c_str());
+        glUniform4fv(loc, 1, &light.color[0]);
+
+        loc = glGetUniformLocation(m_shader, (lightString + ".function").c_str());
+        glUniform3fv(loc, 1, &light.function[0]);
+
+        loc = glGetUniformLocation(m_shader, (lightString + ".angle").c_str());
+        glUniform1f(loc, light.angle);
+
+        loc = glGetUniformLocation(m_shader, (lightString + ".penumbra").c_str());
+        glUniform1f(loc, light.penumbra);
+
+        loc = glGetUniformLocation(m_shader, (lightString + ".type").c_str());
+        switch (light.type) {
+        case LightType::LIGHT_DIRECTIONAL:
+            glUniform1i(loc, 0);
+            break;
+        case LightType::LIGHT_SPOT:
+            glUniform1i(loc, 1);
+            break;
+        case LightType::LIGHT_POINT:
+            glUniform1i(loc, 2);
+            break;
+        }
+        i++;
+    }
+    glUniform1i(glGetUniformLocation(m_shader, "lightsCount"), i);
+    glUseProgram(0);
     update(); // asks for a PaintGL() call to occur
 }
 
@@ -367,11 +368,16 @@ void Realtime::updateVBO() {
 
 void Realtime::settingsChanged() {
     m_camera.setProjMatrix(settings.nearPlane, settings.farPlane);
-    cone.updateParams(settings.shapeParameter1, settings.shapeParameter2);
-    cube.updateParams(settings.shapeParameter1);
-    sphere.updateParams(settings.shapeParameter1, settings.shapeParameter2);
-    cylinder.updateParams(settings.shapeParameter1, settings.shapeParameter2);
-    updateVBO();
+    if (old_param1 != settings.shapeParameter1 || old_param2 != settings.shapeParameter2) {
+        old_param1 = settings.shapeParameter1;
+        old_param2 = settings.shapeParameter2;
+
+        cone.updateParams(settings.shapeParameter1, settings.shapeParameter2);
+        cube.updateParams(settings.shapeParameter1);
+        sphere.updateParams(settings.shapeParameter1, settings.shapeParameter2);
+        cylinder.updateParams(settings.shapeParameter1, settings.shapeParameter2);
+        updateVBO();
+    }
     update(); // asks for a PaintGL() call to occur
 }
 

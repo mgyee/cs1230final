@@ -89,6 +89,9 @@ private:
     float m_screen_width;
     float m_screen_height;
 
+    int old_param1 = 0;
+    int old_param2 = 0;
+
     void updateVBO();
     void paintTexture(GLuint texture, bool pixelFilter, bool kernelFilter);
 };
