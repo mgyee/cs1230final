@@ -24,7 +24,7 @@ void SceneParser::parse_helper(SceneNode *node,
     }
 
     for (ScenePrimitive *prim: node->primitives) {
-        shapes.push_back(RenderShapeData{*prim, ctm});
+        shapes.push_back(RenderShapeData{*prim, ctm, glm::transpose(glm::inverse(ctm))});
     }
     for (SceneLight *light: node->lights) {
         lights.push_back(SceneLightData{light->id,

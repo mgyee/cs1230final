@@ -51,11 +51,14 @@ add_executable(${PROJECT_NAME}
 # GLM: this creates its library and allows you to `#include "glm/..."`
 add_subdirectory(glm)
 
+add_subdirectory(entt)
+
 # GLEW: this creates its library and allows you to `#include "GL/glew.h"`
 add_library(StaticGLEW STATIC glew/src/glew.c
 
 )
 include_directories(${PROJECT_NAME} PRIVATE glew/include)
+include_directories(${PROJECT_NAME} PRIVATE entt/single_include)
 
 # Specifies libraries to be linked (Qt components, glew, etc)
 target_link_libraries(${PROJECT_NAME} PRIVATE

@@ -7,6 +7,8 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
+#include <entt/entt.hpp>
+
 #include <unordered_map>
 #include <QElapsedTimer>
 #include <QOpenGLWidget>
@@ -26,6 +28,28 @@ struct glShape {
     unsigned long length;
 };
 
+struct Position {
+    glm::vec4 value;
+};
+
+struct Velocity {
+    glm::vec4 value;
+};
+
+struct Renderable {
+    // GLuint vao;
+    // GLuint shader;
+    unsigned long index;
+    unsigned long vertexCount;
+
+    glm::mat4 ctm;
+    glm::vec4 cAmbient;
+    glm::vec4 cDiffuse;
+    glm::vec4 cSpecular;
+    float shininess;
+    glm::mat4 inverseTransposectm;
+};
+
 class Realtime : public QOpenGLWidget
 {
 public:
@@ -34,6 +58,8 @@ public:
     void sceneChanged();
     void settingsChanged();
     void saveViewportImage(std::string filePath);
+
+
 
 public slots:
     void tick(QTimerEvent* event);                      // Called once per tick of m_timer
@@ -91,6 +117,11 @@ private:
 
     int old_param1 = 0;
     int old_param2 = 0;
+
+    // Final project 
+    entt::registry registry;
+
+    entt::entity camera_ent;
 
     void updateVBO();
     void paintTexture(GLuint texture, bool pixelFilter, bool kernelFilter);

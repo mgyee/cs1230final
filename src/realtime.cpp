@@ -92,6 +92,12 @@ void Realtime::initializeGL() {
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
 
+    // creating one entity
+    // auto entity = registry.create();
+    // registry.emplace<Position>(entity, glm::vec3(0.0f, 0.0f, 0.0f));
+    // registry.emplace<Velocity>(entity, glm::vec3(0.0f, 0.0f, 0.0f));
+    // registry.emplace<Renderable>(entity, m_vao, m_shader, 10);
+
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -197,30 +203,34 @@ void Realtime::paintGL() {
 
     glUseProgram(m_shader);
 
-    for (auto &shape: glShapes) {
-        glm::mat4 mvpMat = m_camera.getProjMatrix() * m_camera.getViewMatrix() * shape.shape.ctm;
+    glm::vec4 camPos = m_camera.getInverseViewMatrix() * glm::vec4(0.0, 0.0, 0.0, 1.0);
+
+    glUniform4fv(glGetUniformLocation(m_shader, "camPos"), 1, &camPos[0]);
+
+    auto view = registry.view<Renderable>();
+    for (auto entity : view) {
+        // const auto &pos = view.get<Position>(entity);
+        const auto &renderable = view.get<Renderable>(entity);
+        
+        glm::mat4 mvpMat = m_camera.getProjMatrix() * m_camera.getViewMatrix() * renderable.ctm;
 
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "mvpMat"), 1, GL_FALSE, &mvpMat[0][0]);
-        glUniformMatrix4fv(glGetUniformLocation(m_shader, "modelMat"), 1, GL_FALSE, &shape.shape.ctm[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(m_shader, "modelMat"), 1, GL_FALSE, &renderable.ctm[0][0]);
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "invTransModelMat"), 1, GL_FALSE,
-                           &glm::inverse(glm::transpose(shape.shape.ctm))[0][0]);
+                           &renderable.inverseTransposectm[0][0]);
 
-        glm::vec4 ambient = metaData.globalData.ka * shape.shape.primitive.material.cAmbient;
+        glm::vec4 ambient = metaData.globalData.ka * renderable.cAmbient;
         glUniform4fv(glGetUniformLocation(m_shader, "ambient"), 1, &ambient[0]);
 
-        glm::vec4 diffuse = metaData.globalData.kd * shape.shape.primitive.material.cDiffuse;
+        glm::vec4 diffuse = metaData.globalData.kd * renderable.cDiffuse;
         glUniform4fv(glGetUniformLocation(m_shader, "diffuse"), 1, &diffuse[0]);
 
-        glm::vec4 specular = metaData.globalData.ks * shape.shape.primitive.material.cSpecular;
+        glm::vec4 specular = metaData.globalData.ks * renderable.cSpecular;
         glUniform4fv(glGetUniformLocation(m_shader, "specular"), 1, &specular[0]);
 
-        glUniform1f(glGetUniformLocation(m_shader, "shininess"), shape.shape.primitive.material.shininess);
+        glUniform1f(glGetUniformLocation(m_shader, "shininess"), renderable.shininess);
 
-        glm::vec4 camPos = m_camera.getInverseViewMatrix() * glm::vec4(0.0, 0.0, 0.0, 1.0);
-
-        glUniform4fv(glGetUniformLocation(m_shader, "camPos"), 1, &camPos[0]);
-
-        glDrawArrays(GL_TRIANGLES, shape.start, shape.length);
+        glDrawArrays(GL_TRIANGLES, renderable.index, renderable.vertexCount);
     }
 
     glBindVertexArray(0);
@@ -230,6 +240,8 @@ void Realtime::paintGL() {
     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glUseProgram(0);
 
     paintTexture(m_fbo_texture, settings.perPixelFilter, settings.kernelBasedFilter);
 
@@ -335,6 +347,7 @@ void Realtime::updateVBO() {
     std::vector<float> shapeData;
     unsigned long index = 0;
     glShapes.clear();
+    registry.clear();
 
     for(auto &shape: metaData.shapes) {
         std::vector<float> tempData;
@@ -359,8 +372,24 @@ void Realtime::updateVBO() {
         glShapes.push_back(glShape);
 
         shapeData.insert(shapeData.end(), tempData.begin(), tempData.end());
+
+        // update the registry
+        auto newEntity = registry.create();
+        // registry.emplace<Position>(newEntity, shape.primitive.transform.position);
+        // registry.emplace<Velocity>(newEntity, shape.primitive.transform.velocity);
+        
+        Renderable newEntityRender = {index, tempData.size() / 6, 
+                                            shape.ctm, 
+                                            shape.primitive.material.cAmbient, 
+                                            shape.primitive.material.cDiffuse, 
+                                            shape.primitive.material.cSpecular, 
+                                            shape.primitive.material.shininess,
+                                            shape.inverseTransposectm};
+        registry.emplace<Renderable>(newEntity, newEntityRender);
         index += glShape.length;
     }
+    
+    
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
     glBufferData(GL_ARRAY_BUFFER, shapeData.size() * sizeof(GLfloat), shapeData.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -463,26 +492,53 @@ void Realtime::timerEvent(QTimerEvent *event) {
     // Use deltaTime and m_keyMap here to move around
 
     float units = 5.f * deltaTime;
+    
+    auto view = registry.view<Position, Velocity>();
 
     if (m_keyMap[Qt::Key_W]) {
-        metaData.cameraData.pos += units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+    
+        // const auto &vel = view.get<Velocity>(camera_ent);
+        auto &pos = view.get<Position>(camera_ent);
+        pos.value += units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+        
+        // metaData.cameraData.pos += units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
     }
     if (m_keyMap[Qt::Key_A]) {
-        metaData.cameraData.pos -= units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
+        auto &pos = view.get<Position>(camera_ent);
+        pos.value -= units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
                                                       glm::vec3(metaData.cameraData.up)), 0));
+        // metaData.cameraData.pos -= units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
+        //                                               glm::vec3(metaData.cameraData.up)), 0));
     }
     if (m_keyMap[Qt::Key_S]) {
-        metaData.cameraData.pos -= units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+        auto &pos = view.get<Position>(camera_ent);
+        pos.value -= units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+        // metaData.cameraData.pos -= units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
     }
     if (m_keyMap[Qt::Key_D]) {
-        metaData.cameraData.pos += units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
-                                                                glm::vec3(metaData.cameraData.up)), 0));
+        auto &pos = view.get<Position>(camera_ent);
+        pos.value += units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
+                                                      glm::vec3(metaData.cameraData.up)), 0));
+        // metaData.cameraData.pos += units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
+        //                                                         glm::vec3(metaData.cameraData.up)), 0));
     }
     if (m_keyMap[Qt::Key_Control]) {
-        metaData.cameraData.pos -= units * glm::vec4(0, 1, 0, 0);
+        // metaData.cameraData.pos -= units * glm::vec4(0, 1, 0, 0);
     }
     if (m_keyMap[Qt::Key_Space]) {
-        metaData.cameraData.pos += units * glm::vec4(0, 1, 0, 0);
+        auto &pos = view.get<Position>(camera_ent);
+        auto &vel = view.get<Velocity>(camera_ent);
+        if (pos.value.y == 0) {
+            vel.value = glm::vec4(0, 5, 0, 0);
+        }
+        pos.value += deltaTime * vel.value;
+        vel.value -= deltaTime * 2;
+
+        if (pos.value.y <= 0) {
+            pos.value.y = 0;
+            vel.value = glm::vec4(0);
+        }
+        // metaData.cameraData.pos += units * glm::vec4(0, 1, 0, 0);
     }
 
     m_camera.setViewMatrix(metaData.cameraData.pos, metaData.cameraData.look, metaData.cameraData.up);
