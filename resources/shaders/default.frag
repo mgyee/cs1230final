@@ -13,6 +13,13 @@ uniform vec4 specular;
 uniform float shininess;
 uniform vec4 camPos;
 
+uniform bool fog;
+uniform vec4 fogColor;
+uniform float fogDensity;
+uniform float fogStart;
+uniform float fogEnd;
+uniform float fogHeight;
+
 struct Light
 {
   int type;
@@ -26,6 +33,29 @@ struct Light
 
 uniform Light lights[8];
 uniform int lightsCount;
+
+const vec3 FogBaseColor = vec3(1., 1., 1.);
+
+float calculateFogFactor(float distance) {
+    // Exponential fog calculation
+    float fogFactor = exp(-fogDensity * distance);
+    return clamp(fogFactor, 0.0, 1.0);
+}
+
+
+
+vec3 applyFog(in vec3 rgb, in float distance, in vec3 rayOri, in vec3 rayDir) {
+    float b = fogDensity;
+
+    float fogAmount = b * exp(-rayOri.y * b) *
+                      (1.0 - exp(-distance * rayDir.y * b)) /
+                      max(abs(rayDir.y), 0.0001);
+
+    fogAmount = clamp(fogAmount, 0.0, 1.0);
+
+    return mix(rgb, fogColor.rgb, fogAmount);
+}
+
 
 void main() {
     fragColor = ambient;
@@ -78,5 +108,22 @@ void main() {
         }
 
         fragColor += f * I * (diffuse * diffuse_closeness + specular * specular_closeness);
+
+
+        if (fog) {
+            float distance = length(worldPos - vec3(camPos));
+            float height = worldPos.y; // Use the world position height
+
+            vec3 finalColor = fragColor.rgb;
+            // finalColor = applyFog(finalColor, distance, height);
+
+            finalColor = applyFog(
+                finalColor,
+                distance,
+                vec3(camPos.x, fogHeight, camPos.z),  // Use a base height
+                V
+            );
+            fragColor = vec4(finalColor, 1.0);
+        }
     }
 }

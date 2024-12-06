@@ -338,6 +338,13 @@ void Realtime::paintGL() {
 
     glUseProgram(m_shader);
 
+    glUniform1i(glGetUniformLocation(m_shader, "fog"), m_fogEnabled);
+    glUniform4fv(glGetUniformLocation(m_shader, "fogColor"), 1, &m_fogColor[0]);
+    glUniform1f(glGetUniformLocation(m_shader, "fogDensity"), m_fogDensity);
+    glUniform1f(glGetUniformLocation(m_shader, "fogStart"), m_fogStart);
+    glUniform1f(glGetUniformLocation(m_shader, "fogEnd"), m_fogEnd);
+    glUniform1f(glGetUniformLocation(m_shader, "fogHeight"), m_fogHeight);
+
     glm::vec4 camPos = m_camera.getInverseViewMatrix() * glm::vec4(0.0, 0.0, 0.0, 1.0);
 
     glUniform4fv(glGetUniformLocation(m_shader, "camPos"), 1, &camPos[0]);
@@ -411,6 +418,7 @@ void Realtime::renderSkybox() {
     // Set uniforms
     glUniformMatrix4fv(glGetUniformLocation(m_skybox_shader, "view"), 1, GL_FALSE, &view[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(m_skybox_shader, "projection"), 1, GL_FALSE, &m_camera.getProjMatrix()[0][0]);
+
 
     // Bind cubemap
     glActiveTexture(GL_TEXTURE2);
