@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	pb "graphicsFinal/generated/proto"
 	"log"
 	"net"
@@ -28,6 +29,15 @@ func updatePlayerInformation(id int64, info pb.Player) {
 	playerInfo[id] = &info
 }
 
+func printPlayerInfo() {
+	gameInfoMutex.Lock()
+	defer gameInfoMutex.Unlock()
+
+	for _, player := range playerInfo {
+		fmt.Printf("Player %d: with position, %d, %d, %d\n", player.PlayerId, player.PosX, player.PosY, player.PosZ)
+	} 
+}
+
 // Implement each RPC method
 func (s *server) RegisterPlayer(ctx context.Context, req *pb.RegisterPlayerRequest) (*pb.RegisterPlayerResponse, error) {
 	idMutex.Lock()
@@ -38,6 +48,8 @@ func (s *server) RegisterPlayer(ctx context.Context, req *pb.RegisterPlayerReque
 	gameInfoMutex.Lock()
 	playerInfo = append(playerInfo, &pb.Player{})
 	gameInfoMutex.Unlock()
+
+	//printPlayerInfo()
 	
 	return &pb.RegisterPlayerResponse{
 		PlayerId: p_id,
@@ -51,6 +63,8 @@ func (s *server) GetGameState(ctx context.Context, req *pb.GetGameStateRequest) 
 		Players: playerInfo,
 	}
 	gameInfoMutex.Unlock()
+
+	printPlayerInfo()
 
 	return &pb.GetGameStateResponse{
 		GameState: &curGameState,
