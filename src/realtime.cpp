@@ -444,7 +444,7 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
         // Use deltaX and deltaY here to rotate
 
         if (m_mouseDown) {
-            float x_angle = deltaX * std::numbers::pi / 100.f;
+            float x_angle = deltaX * std::numbers::pi / 500.f;
             glm::vec3 u_x(0, -1, 0);
             float c_x = glm::cos(x_angle);
             float s_x = glm::sin(x_angle);
@@ -452,7 +452,7 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
 
             glm::vec3 u_y = -glm::normalize(glm::cross(glm::vec3(metaData.cameraData.look),
                                                                 glm::vec3(metaData.cameraData.up)));
-            float y_angle = deltaY * std::numbers::pi / 100.f;
+            float y_angle = deltaY * std::numbers::pi / 500.f;
             float c_y = glm::cos(y_angle);
             float s_y = glm::sin(y_angle);
             float one_minus_c_y = 1.f - c_y;
@@ -493,52 +493,74 @@ void Realtime::timerEvent(QTimerEvent *event) {
 
     float units = 5.f * deltaTime;
     
-    auto view = registry.view<Position, Velocity>();
+    // auto view = registry.view<Position, Velocity>();
 
     if (m_keyMap[Qt::Key_W]) {
-    
-        // const auto &vel = view.get<Velocity>(camera_ent);
-        auto &pos = view.get<Position>(camera_ent);
-        pos.value += units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
-        
-        // metaData.cameraData.pos += units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+        // auto &pos = view.get<Position>(camera_ent);
+        // pos.value += units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+        glm::vec4 move = units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+        move.y = 0;
+        metaData.cameraData.pos += move;
     }
     if (m_keyMap[Qt::Key_A]) {
-        auto &pos = view.get<Position>(camera_ent);
-        pos.value -= units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
-                                                      glm::vec3(metaData.cameraData.up)), 0));
-        // metaData.cameraData.pos -= units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
+        // auto &pos = view.get<Position>(camera_ent);
+        // pos.value -= units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
         //                                               glm::vec3(metaData.cameraData.up)), 0));
+        glm::vec4 move = units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
+                                                        glm::vec3(metaData.cameraData.up)), 0));
+        move.y = 0;
+        metaData.cameraData.pos -= move;
     }
     if (m_keyMap[Qt::Key_S]) {
-        auto &pos = view.get<Position>(camera_ent);
-        pos.value -= units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
-        // metaData.cameraData.pos -= units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+        // auto &pos = view.get<Position>(camera_ent);
+        // pos.value -= units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+        glm::vec4 move = units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+        move.y = 0;
+        metaData.cameraData.pos -= move;
     }
     if (m_keyMap[Qt::Key_D]) {
-        auto &pos = view.get<Position>(camera_ent);
-        pos.value += units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
-                                                      glm::vec3(metaData.cameraData.up)), 0));
-        // metaData.cameraData.pos += units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
-        //                                                         glm::vec3(metaData.cameraData.up)), 0));
+        // auto &pos = view.get<Position>(camera_ent);
+        // pos.value += units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
+        //                                               glm::vec3(metaData.cameraData.up)), 0));
+        glm::vec4 move = units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
+                                                                             glm::vec3(metaData.cameraData.up)), 0));
+        move.y = 0;
+        metaData.cameraData.pos += move;
     }
-    if (m_keyMap[Qt::Key_Control]) {
-        // metaData.cameraData.pos -= units * glm::vec4(0, 1, 0, 0);
-    }
-    if (m_keyMap[Qt::Key_Space]) {
-        auto &pos = view.get<Position>(camera_ent);
-        auto &vel = view.get<Velocity>(camera_ent);
-        if (pos.value.y == 0) {
-            vel.value = glm::vec4(0, 5, 0, 0);
-        }
-        pos.value += deltaTime * vel.value;
-        vel.value -= deltaTime * 2;
+    // if (m_keyMap[Qt::Key_Control]) {
+    //     // metaData.cameraData.pos -= units * glm::vec4(0, 1, 0, 0);
+    // }
+    // if (m_keyMap[Qt::Key_Space]) {
+    //     auto &pos = view.get<Position>(camera_ent);
+    //     auto &vel = view.get<Velocity>(camera_ent);
+    //     if (pos.value.y == 0) {
+    //         vel.value = glm::vec4(0, 5, 0, 0);
+    //     }
+    //     pos.value += deltaTime * vel.value;
+    //     vel.value -= deltaTime * 2;
 
-        if (pos.value.y <= 0) {
-            pos.value.y = 0;
-            vel.value = glm::vec4(0);
+    //     if (pos.value.y <= 0) {
+    //         pos.value.y = 0;
+    //         vel.value = glm::vec4(0);
+    //     }
+    //     // metaData.cameraData.pos += units * glm::vec4(0, 1, 0, 0);
+    // }
+
+    if (m_isJumping) {
+        m_verticalVelocity += m_gravity * deltaTime;
+
+        metaData.cameraData.pos.y += m_verticalVelocity * deltaTime;
+
+        if (metaData.cameraData.pos.y <= m_groundLevel) {
+            metaData.cameraData.pos.y = m_groundLevel;
+            m_verticalVelocity = 0.0f;
+            m_isJumping = false;
         }
-        // metaData.cameraData.pos += units * glm::vec4(0, 1, 0, 0);
+    }
+
+    if (m_keyMap[Qt::Key_Space] && !m_isJumping) {
+        m_isJumping = true;
+        m_verticalVelocity = m_jumpSpeed;
     }
 
     m_camera.setViewMatrix(metaData.cameraData.pos, metaData.cameraData.look, metaData.cameraData.up);
