@@ -344,6 +344,7 @@ void Realtime::paintGL() {
     glUniform1f(glGetUniformLocation(m_shader, "fogStart"), m_fogStart);
     glUniform1f(glGetUniformLocation(m_shader, "fogEnd"), m_fogEnd);
     glUniform1f(glGetUniformLocation(m_shader, "fogHeight"), m_fogHeight);
+    glUniform1f(glGetUniformLocation(m_shader, "fogBaseHeight"), m_fogBaseHeight);
 
     glm::vec4 camPos = m_camera.getInverseViewMatrix() * glm::vec4(0.0, 0.0, 0.0, 1.0);
 
@@ -360,6 +361,7 @@ void Realtime::paintGL() {
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "modelMat"), 1, GL_FALSE, &renderable.ctm[0][0]);
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "invTransModelMat"), 1, GL_FALSE,
                            &renderable.inverseTransposectm[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(m_shader, "viewMat"), 1, GL_FALSE, &m_camera.getViewMatrix()[0][0]);
 
         glm::vec4 ambient = metaData.globalData.ka * renderable.cAmbient;
         glUniform4fv(glGetUniformLocation(m_shader, "ambient"), 1, &ambient[0]);
@@ -418,6 +420,9 @@ void Realtime::renderSkybox() {
     // Set uniforms
     glUniformMatrix4fv(glGetUniformLocation(m_skybox_shader, "view"), 1, GL_FALSE, &view[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(m_skybox_shader, "projection"), 1, GL_FALSE, &m_camera.getProjMatrix()[0][0]);
+    glUniform1i(glGetUniformLocation(m_skybox_shader, "fog"), m_fogEnabled);
+    glUniform4fv(glGetUniformLocation(m_skybox_shader, "fogColor"), 1, &m_fogColor[0]);
+    glUniform1f(glGetUniformLocation(m_skybox_shader, "fogDensity"), m_fogDensity);
 
 
     // Bind cubemap
@@ -688,47 +693,47 @@ void Realtime::timerEvent(QTimerEvent *event) {
     if (m_keyMap[Qt::Key_W]) {
 
         // const auto &vel = view.get<Velocity>(camera_ent);
-        auto &pos = view.get<Position>(camera_ent);
-        pos.value += units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+        // auto &pos = view.get<Position>(camera_ent);
+        // pos.value += units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
 
-        // metaData.cameraData.pos += units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+        metaData.cameraData.pos += units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
     }
     if (m_keyMap[Qt::Key_A]) {
-        auto &pos = view.get<Position>(camera_ent);
-        pos.value -= units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
-                                                                 glm::vec3(metaData.cameraData.up)), 0));
-        // metaData.cameraData.pos -= units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
-        //                                               glm::vec3(metaData.cameraData.up)), 0));
+        // auto &pos = view.get<Position>(camera_ent);
+        // pos.value -= units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
+        //                                                          glm::vec3(metaData.cameraData.up)), 0));
+        metaData.cameraData.pos -= units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
+                                                      glm::vec3(metaData.cameraData.up)), 0));
     }
     if (m_keyMap[Qt::Key_S]) {
-        auto &pos = view.get<Position>(camera_ent);
-        pos.value -= units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
-        // metaData.cameraData.pos -= units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+        // auto &pos = view.get<Position>(camera_ent);
+        // pos.value -= units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+        metaData.cameraData.pos -= units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
     }
     if (m_keyMap[Qt::Key_D]) {
-        auto &pos = view.get<Position>(camera_ent);
-        pos.value += units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
-                                                                 glm::vec3(metaData.cameraData.up)), 0));
-        // metaData.cameraData.pos += units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
-        //                                                         glm::vec3(metaData.cameraData.up)), 0));
+        // auto &pos = view.get<Position>(camera_ent);
+        // pos.value += units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
+        //                                                          glm::vec3(metaData.cameraData.up)), 0));
+        metaData.cameraData.pos += units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
+                                                                glm::vec3(metaData.cameraData.up)), 0));
     }
     if (m_keyMap[Qt::Key_Control]) {
-        // metaData.cameraData.pos -= units * glm::vec4(0, 1, 0, 0);
+        metaData.cameraData.pos -= units * glm::vec4(0, 1, 0, 0);
     }
     if (m_keyMap[Qt::Key_Space]) {
-        auto &pos = view.get<Position>(camera_ent);
-        auto &vel = view.get<Velocity>(camera_ent);
-        if (pos.value.y == 0) {
-            vel.value = glm::vec4(0, 5, 0, 0);
-        }
-        pos.value += deltaTime * vel.value;
-        vel.value -= deltaTime * 2;
+        // auto &pos = view.get<Position>(camera_ent);
+        // auto &vel = view.get<Velocity>(camera_ent);
+        // if (pos.value.y == 0) {
+        //     vel.value = glm::vec4(0, 5, 0, 0);
+        // }
+        // pos.value += deltaTime * vel.value;
+        // vel.value -= deltaTime * 2;
 
-        if (pos.value.y <= 0) {
-            pos.value.y = 0;
-            vel.value = glm::vec4(0);
-        }
-        // metaData.cameraData.pos += units * glm::vec4(0, 1, 0, 0);
+        // if (pos.value.y <= 0) {
+        //     pos.value.y = 0;
+        //     vel.value = glm::vec4(0);
+        // }
+        metaData.cameraData.pos += units * glm::vec4(0, 1, 0, 0);
     }
 
     m_camera.setViewMatrix(metaData.cameraData.pos, metaData.cameraData.look, metaData.cameraData.up);

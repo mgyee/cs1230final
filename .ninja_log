@@ -1,54 +1,102 @@
 # ninja log v6
 49296	50032	1733349177700577507	CMakeFiles/projects_realtime.dir/src/shapes/cone.cpp.o	f60f937a91d35b4a
-25	65	1733522452890610966	CMakeFiles/projects_realtime.dir/.rcc/qrc_Resources.cpp.o	3dba092d1adc271d
+30	120	1733573288439490563	CMakeFiles/projects_realtime.dir/.rcc/qrc_Resources.cpp.o	3dba092d1adc271d
 49295	52098	1733349177699015883	CMakeFiles/projects_realtime.dir/src/utils/scenefilereader.cpp.o	c96a4f5caf5a954d
-11	934	1733522406933646000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
+8	490	1733605157600694000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
 49295	50084	1733349177699950383	CMakeFiles/projects_realtime.dir/src/shapes/cube.cpp.o	8517f2063789b2c3
-8	25	1733522452889426614	.rcc/qrc_Resources.cpp	1950b6abf4822235
-936	6272	1733522406955469534	CMakeFiles/projects_realtime.dir/src/realtime.cpp.o	2e90ad296158d7a7
-935	3155	1733522406955044069	CMakeFiles/projects_realtime.dir/src/main.cpp.o	239731b90c7a2d72
-65	249	1733522452930850391	projects_realtime	b0b2b2d6426336eb
+11	30	1733573288438662356	.rcc/qrc_Resources.cpp	1950b6abf4822235
+490	3815	1733605157608557543	CMakeFiles/projects_realtime.dir/src/realtime.cpp.o	2e90ad296158d7a7
+490	1511	1733605157608451128	CMakeFiles/projects_realtime.dir/src/main.cpp.o	239731b90c7a2d72
+3815	3958	1733605160932765092	projects_realtime	b0b2b2d6426336eb
 49295	50970	1733349177699413967	CMakeFiles/projects_realtime.dir/src/utils/sceneparser.cpp.o	d86d5892b8024ff6
 50056	50314	1733349178460137489	CMakeFiles/projects_realtime.dir/src/camera/camera.cpp.o	8564e841a2f38e5e
-8	25	1733522452889426614	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/.rcc/qrc_Resources.cpp	1950b6abf4822235
+11	30	1733573288438662356	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/.rcc/qrc_Resources.cpp	1950b6abf4822235
 49297	50066	1733349177701557506	CMakeFiles/projects_realtime.dir/src/shapes/sphere.cpp.o	6265fdcafc982a78
-935	3157	1733522406954551936	CMakeFiles/projects_realtime.dir/projects_realtime_autogen/mocs_compilation.cpp.o	679346e4525e2067
+490	1510	1733605157608303755	CMakeFiles/projects_realtime.dir/projects_realtime_autogen/mocs_compilation.cpp.o	679346e4525e2067
 48341	48405	1733349176745772210	libStaticGLEW.a	afd5cf47ff36a0c7
 12	43	1733430117246362150	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/StaticGLEW_autogen/mocs_compilation.cpp	c47b20cb1865f6fa
-11	934	1733522406933646000	projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
-11	934	1733522406933646000	projects_realtime_autogen/timestamp	97b24f2ab0f6869e
+8	490	1733605157600694000	projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
+8	490	1733605157600694000	projects_realtime_autogen/timestamp	97b24f2ab0f6869e
 91	121	1733349128495779906	CMakeFiles/StaticGLEW.dir/StaticGLEW_autogen/mocs_compilation.cpp.o	f14ab376310bbeb
-11	934	1733522406933646000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/timestamp	97b24f2ab0f6869e
-937	3464	1733522406957157935	CMakeFiles/projects_realtime.dir/src/mainwindow.cpp.o	616111e848e5292e
+8	490	1733605157600694000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/timestamp	97b24f2ab0f6869e
+491	1688	1733605157608652917	CMakeFiles/projects_realtime.dir/src/mainwindow.cpp.o	616111e848e5292e
 12	43	1733430117246362150	StaticGLEW_autogen/timestamp	c47b20cb1865f6fa
 12	43	1733430117246362150	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/StaticGLEW_autogen/timestamp	c47b20cb1865f6fa
 49294	50055	1733349177698866384	CMakeFiles/projects_realtime.dir/src/settings.cpp.o	15f70ccde6e3a2ee
 92	48341	1733349128496008739	CMakeFiles/StaticGLEW.dir/glew/src/glew.c.o	72d60af825f135cf
 12	43	1733430117246362150	StaticGLEW_autogen/mocs_compilation.cpp	c47b20cb1865f6fa
 50034	50568	1733349178438455302	CMakeFiles/projects_realtime.dir/src/shapes/cylinder.cpp.o	da5abce201733123
-9	25	1733522484939993360	.rcc/qrc_Resources.cpp	1950b6abf4822235
-9	25	1733522484939993360	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/.rcc/qrc_Resources.cpp	1950b6abf4822235
-25	63	1733522484941021459	CMakeFiles/projects_realtime.dir/.rcc/qrc_Resources.cpp.o	3dba092d1adc271d
-63	247	1733522484979337895	projects_realtime	b0b2b2d6426336eb
-31	983	1733522540569276000	projects_realtime_autogen/timestamp	97b24f2ab0f6869e
-31	983	1733522540569276000	projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
-31	983	1733522540569276000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/timestamp	97b24f2ab0f6869e
-31	983	1733522540569276000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
-984	3336	1733522540590774713	CMakeFiles/projects_realtime.dir/src/main.cpp.o	239731b90c7a2d72
-983	3344	1733522540590103120	CMakeFiles/projects_realtime.dir/projects_realtime_autogen/mocs_compilation.cpp.o	679346e4525e2067
-985	3651	1733522540591457682	CMakeFiles/projects_realtime.dir/src/mainwindow.cpp.o	616111e848e5292e
-984	6452	1733522540591161178	CMakeFiles/projects_realtime.dir/src/realtime.cpp.o	2e90ad296158d7a7
-6452	6649	1733522546058650628	projects_realtime	b0b2b2d6426336eb
-7	26	1733522613398071116	.rcc/qrc_Resources.cpp	1950b6abf4822235
-7	26	1733522613398071116	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/.rcc/qrc_Resources.cpp	1950b6abf4822235
-26	65	1733522613398909087	CMakeFiles/projects_realtime.dir/.rcc/qrc_Resources.cpp.o	3dba092d1adc271d
-65	260	1733522613438456460	projects_realtime	b0b2b2d6426336eb
-8	684	1733522627500448000	projects_realtime_autogen/timestamp	97b24f2ab0f6869e
-8	684	1733522627500448000	projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
-8	684	1733522627500448000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/timestamp	97b24f2ab0f6869e
-8	684	1733522627500448000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
-684	2375	1733522627512580297	CMakeFiles/projects_realtime.dir/projects_realtime_autogen/mocs_compilation.cpp.o	679346e4525e2067
-685	2398	1733522627512907010	CMakeFiles/projects_realtime.dir/src/main.cpp.o	239731b90c7a2d72
-685	2640	1733522627513468269	CMakeFiles/projects_realtime.dir/src/mainwindow.cpp.o	616111e848e5292e
-685	5440	1733522627513097180	CMakeFiles/projects_realtime.dir/src/realtime.cpp.o	2e90ad296158d7a7
-5440	5625	1733522632268532592	projects_realtime	b0b2b2d6426336eb
+9	530	1733605199857815000	projects_realtime_autogen/timestamp	97b24f2ab0f6869e
+9	530	1733605199857815000	projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
+9	530	1733605199857815000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/timestamp	97b24f2ab0f6869e
+9	530	1733605199857815000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
+531	1639	1733605199866426223	CMakeFiles/projects_realtime.dir/src/main.cpp.o	239731b90c7a2d72
+531	1640	1733605199866205560	CMakeFiles/projects_realtime.dir/projects_realtime_autogen/mocs_compilation.cpp.o	679346e4525e2067
+532	1802	1733605199867092214	CMakeFiles/projects_realtime.dir/src/mainwindow.cpp.o	616111e848e5292e
+531	3446	1733605199866783843	CMakeFiles/projects_realtime.dir/src/realtime.cpp.o	2e90ad296158d7a7
+3446	3580	1733605202781947031	projects_realtime	b0b2b2d6426336eb
+8	27	1733605412337093018	.rcc/qrc_Resources.cpp	1950b6abf4822235
+8	27	1733605412337093018	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/.rcc/qrc_Resources.cpp	1950b6abf4822235
+28	201	1733605412337971505	CMakeFiles/projects_realtime.dir/.rcc/qrc_Resources.cpp.o	3dba092d1adc271d
+201	412	1733605412511190267	projects_realtime	b0b2b2d6426336eb
+9	555	1733605470712539000	projects_realtime_autogen/timestamp	97b24f2ab0f6869e
+9	555	1733605470712539000	projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
+9	555	1733605470712539000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/timestamp	97b24f2ab0f6869e
+9	555	1733605470712539000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
+555	1659	1733605470720967194	CMakeFiles/projects_realtime.dir/src/main.cpp.o	239731b90c7a2d72
+555	1660	1733605470720738280	CMakeFiles/projects_realtime.dir/projects_realtime_autogen/mocs_compilation.cpp.o	679346e4525e2067
+556	1822	1733605470721517477	CMakeFiles/projects_realtime.dir/src/mainwindow.cpp.o	616111e848e5292e
+556	3471	1733605470721191274	CMakeFiles/projects_realtime.dir/src/realtime.cpp.o	2e90ad296158d7a7
+3471	3603	1733605473636769415	projects_realtime	b0b2b2d6426336eb
+8	601	1733605496040378000	projects_realtime_autogen/timestamp	97b24f2ab0f6869e
+8	601	1733605496040378000	projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
+8	601	1733605496040378000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/timestamp	97b24f2ab0f6869e
+8	601	1733605496040378000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
+602	1710	1733605496048813864	CMakeFiles/projects_realtime.dir/src/main.cpp.o	239731b90c7a2d72
+601	1710	1733605496048602992	CMakeFiles/projects_realtime.dir/projects_realtime_autogen/mocs_compilation.cpp.o	679346e4525e2067
+602	1859	1733605496049281357	CMakeFiles/projects_realtime.dir/src/mainwindow.cpp.o	616111e848e5292e
+602	3483	1733605496048941154	CMakeFiles/projects_realtime.dir/src/realtime.cpp.o	2e90ad296158d7a7
+3483	3622	1733605498930401918	projects_realtime	b0b2b2d6426336eb
+8	533	1733605668297998000	projects_realtime_autogen/timestamp	97b24f2ab0f6869e
+8	533	1733605668297998000	projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
+8	533	1733605668297998000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/timestamp	97b24f2ab0f6869e
+8	533	1733605668297998000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
+534	576	1733605668358042559	.rcc/qrc_Resources.cpp	1950b6abf4822235
+534	576	1733605668358042559	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/.rcc/qrc_Resources.cpp	1950b6abf4822235
+579	733	1733605668361382594	CMakeFiles/projects_realtime.dir/.rcc/qrc_Resources.cpp.o	3dba092d1adc271d
+577	1746	1733605668359239542	CMakeFiles/projects_realtime.dir/projects_realtime_autogen/mocs_compilation.cpp.o	679346e4525e2067
+577	1764	1733605668359674410	CMakeFiles/projects_realtime.dir/src/main.cpp.o	239731b90c7a2d72
+578	1918	1733605668360308901	CMakeFiles/projects_realtime.dir/src/mainwindow.cpp.o	616111e848e5292e
+577	3541	1733605668359935365	CMakeFiles/projects_realtime.dir/src/realtime.cpp.o	2e90ad296158d7a7
+3541	3674	1733605671323803467	projects_realtime	b0b2b2d6426336eb
+8	506	1733605737186972000	projects_realtime_autogen/timestamp	97b24f2ab0f6869e
+8	506	1733605737186972000	projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
+8	506	1733605737186972000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/timestamp	97b24f2ab0f6869e
+8	506	1733605737186972000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
+506	1804	1733605737194930995	CMakeFiles/projects_realtime.dir/projects_realtime_autogen/mocs_compilation.cpp.o	679346e4525e2067
+506	1819	1733605737195120451	CMakeFiles/projects_realtime.dir/src/main.cpp.o	239731b90c7a2d72
+507	1979	1733605737195583319	CMakeFiles/projects_realtime.dir/src/mainwindow.cpp.o	616111e848e5292e
+507	3671	1733605737195239532	CMakeFiles/projects_realtime.dir/src/realtime.cpp.o	2e90ad296158d7a7
+3671	3799	1733605740359794247	projects_realtime	b0b2b2d6426336eb
+9	543	1733606153922722000	projects_realtime_autogen/timestamp	97b24f2ab0f6869e
+9	543	1733606153922722000	projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
+9	543	1733606153922722000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/timestamp	97b24f2ab0f6869e
+9	543	1733606153922722000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
+544	1844	1733606153931489457	CMakeFiles/projects_realtime.dir/src/main.cpp.o	239731b90c7a2d72
+544	1845	1733606153931290002	CMakeFiles/projects_realtime.dir/projects_realtime_autogen/mocs_compilation.cpp.o	679346e4525e2067
+544	2072	1733606153931959284	CMakeFiles/projects_realtime.dir/src/mainwindow.cpp.o	616111e848e5292e
+544	3780	1733606153931617747	CMakeFiles/projects_realtime.dir/src/realtime.cpp.o	2e90ad296158d7a7
+3780	3929	1733606157167675583	projects_realtime	b0b2b2d6426336eb
+8	484	1733606432451218000	projects_realtime_autogen/timestamp	97b24f2ab0f6869e
+8	484	1733606432451218000	projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
+8	484	1733606432451218000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/timestamp	97b24f2ab0f6869e
+8	484	1733606432451218000	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime_autogen/mocs_compilation.cpp	97b24f2ab0f6869e
+484	2200	1733606432459813599	CMakeFiles/projects_realtime.dir/src/main.cpp.o	239731b90c7a2d72
+484	2217	1733606432459639393	CMakeFiles/projects_realtime.dir/projects_realtime_autogen/mocs_compilation.cpp.o	679346e4525e2067
+485	2521	1733606432460104594	CMakeFiles/projects_realtime.dir/src/mainwindow.cpp.o	616111e848e5292e
+484	4623	1733606432459987679	CMakeFiles/projects_realtime.dir/src/realtime.cpp.o	2e90ad296158d7a7
+4623	4832	1733606436598358509	projects_realtime	b0b2b2d6426336eb
+13	34	1733607686158968503	.rcc/qrc_Resources.cpp	1950b6abf4822235
+13	34	1733607686158968503	/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/.rcc/qrc_Resources.cpp	1950b6abf4822235
+35	253	1733607686159612614	CMakeFiles/projects_realtime.dir/.rcc/qrc_Resources.cpp.o	3dba092d1adc271d
+253	433	1733607686378180164	projects_realtime	b0b2b2d6426336eb

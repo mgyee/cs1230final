@@ -4,6 +4,7 @@ out vec4 fragColor;
 
 in vec3 worldPos;
 in vec3 worldNorm;
+in vec4 eyeSpacePos;
 
 uniform vec4 ambient;
 
@@ -19,6 +20,7 @@ uniform float fogDensity;
 uniform float fogStart;
 uniform float fogEnd;
 uniform float fogHeight;
+uniform float fogBaseHeight;
 
 struct Light
 {
@@ -34,28 +36,30 @@ struct Light
 uniform Light lights[8];
 uniform int lightsCount;
 
-const vec3 FogBaseColor = vec3(1., 1., 1.);
 
-float calculateFogFactor(float distance) {
-    // Exponential fog calculation
-    float fogFactor = exp(-fogDensity * distance);
-    return clamp(fogFactor, 0.0, 1.0);
+float calculateVolumetricFogFactor(float eyeSpaceDepth, float worldHeight) {
+    // float baseFogFactor = 1.0 - exp(-fogDensity * eyeSpaceDepth);
+    float baseFogFactor = 1.0 - exp(-pow(fogDensity * eyeSpaceDepth, 2.0));
+
+    float heightFactor = smoothstep(fogBaseHeight, fogHeight, worldHeight);
+
+    float densityFactor = 1.0 - exp(-fogDensity * eyeSpaceDepth);
+
+    // return clamp(baseFogFactor * (1.0 - heightFactor), 0.0, 1.0);
+    return clamp(baseFogFactor * (1.0 - heightFactor) * densityFactor, 0.0, 1.0);
 }
 
+vec3 calculateFogColor(float worldHeight) {
+    vec3 baseFogColor = fogColor.rgb;
 
+    vec3 skyColor = vec3(0.7, 0.8, 1.0);
+    vec3 groundColor = vec3(0.8, 0.8, 0.8);
 
-vec3 applyFog(in vec3 rgb, in float distance, in vec3 rayOri, in vec3 rayDir) {
-    float b = fogDensity;
+    float heightBlend = smoothstep(fogBaseHeight, fogHeight, worldHeight);
+    vec3 dynamicFogColor = mix(groundColor, skyColor, heightBlend);
 
-    float fogAmount = b * exp(-rayOri.y * b) *
-                      (1.0 - exp(-distance * rayDir.y * b)) /
-                      max(abs(rayDir.y), 0.0001);
-
-    fogAmount = clamp(fogAmount, 0.0, 1.0);
-
-    return mix(rgb, fogColor.rgb, fogAmount);
+    return mix(baseFogColor, dynamicFogColor, 0.5);
 }
-
 
 void main() {
     fragColor = ambient;
@@ -110,20 +114,15 @@ void main() {
         fragColor += f * I * (diffuse * diffuse_closeness + specular * specular_closeness);
 
 
+
         if (fog) {
-            float distance = length(worldPos - vec3(camPos));
-            float height = worldPos.y; // Use the world position height
+                float eyeSpaceDepth = abs(eyeSpacePos.z);
 
-            vec3 finalColor = fragColor.rgb;
-            // finalColor = applyFog(finalColor, distance, height);
+                vec3 newFogColor = calculateFogColor(worldPos.y);
 
-            finalColor = applyFog(
-                finalColor,
-                distance,
-                vec3(camPos.x, fogHeight, camPos.z),  // Use a base height
-                V
-            );
-            fragColor = vec4(finalColor, 1.0);
-        }
+                float fogFactor = calculateVolumetricFogFactor(eyeSpaceDepth, worldPos.y);
+
+                fragColor.rgb = mix(fragColor.rgb, newFogColor.rgb, fogFactor);
+            }
     }
 }
