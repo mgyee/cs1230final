@@ -161,7 +161,7 @@ void Realtime::initializeGL() {
 
 void Realtime::createSkybox() {
     GLenum error3 = glGetError();
-    std::cout << "ERROR at start of create Skybox " << error3 << "\n";
+    // std::cout << "ERROR at start of create Skybox " << error3 << "\n";
     m_skybox_shader = ShaderLoader::createShaderProgram("resources/shaders/skybox.vert", "resources/shaders/skybox.frag");
 
     std::vector<GLfloat> skyboxVertices = {
@@ -210,13 +210,13 @@ void Realtime::createSkybox() {
     };
 
     GLenum error4 = glGetError();
-    std::cout << "ERROR after creating positions " << error4 << "\n";
+    // std::cout << "ERROR after creating positions " << error4 << "\n";
 
     glGenVertexArrays(1, &m_skybox_vao);
     glGenBuffers(1, &m_skybox_vbo);
 
     GLenum error2 = glGetError();
-    std::cout << "ERROR after gen arrays and buffers " << error2 << "\n";
+    // std::cout << "ERROR after gen arrays and buffers " << error2 << "\n";
 
     glBindVertexArray(m_skybox_vao);
     glBindBuffer(GL_ARRAY_BUFFER, m_skybox_vbo);
@@ -260,7 +260,7 @@ void Realtime::loadCubeMap(std::vector<std::string> faces) {
                          0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
                          );
             stbi_image_free(data);
-            std::cout << "Succesfully loaded image" << std::endl; // this works
+            // std::cout << "Succesfully loaded image" << std::endl; // this works
         }
         else
         {
@@ -323,6 +323,11 @@ void Realtime::makeFBO(){
 }
 
 void Realtime::paintGL() {
+    if (settings.FXAA) {
+        std::cout << "FXAA is enabled" << "\n";
+    } else {
+        std::cout << "FXAA is NOT enabled" << "\n";
+    }
     // Students: anything requiring OpenGL calls every frame should be done here
 
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
@@ -392,20 +397,20 @@ void Realtime::paintGL() {
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // renderSkybox();
     GLenum error = glGetError();
-    std::cout << "ERROR AFTER RENDERING " << error << "\n";
+    // std::cout << "ERROR AFTER RENDERING " << error << "\n";
 
 }
 
 void Realtime::renderSkybox() {
 
-    if (m_cubemap_texture == 0) {
-        std::cerr << "ERROR: Invalid cubemap texture" << std::endl;
-        return;
-    } else {
-        std::cout << "valid cubemap texture\n";
-    }
+    // if (m_cubemap_texture == 0) {
+    //     std::cerr << "ERROR: Invalid cubemap texture" << std::endl;
+    //     return;
+    // } else {
+    //     std::cout << "valid cubemap texture\n";
+    // }
 
-    std::cout << "VBO for skybox is " << m_skybox_vbo << " and vao for skybox is " << m_skybox_vao << std::endl;
+    // std::cout << "VBO for skybox is " << m_skybox_vbo << " and vao for skybox is " << m_skybox_vao << std::endl;
     // Disable depth writing
     // glDepthMask(GL_FALSE);
     // glclear
@@ -602,6 +607,7 @@ void Realtime::settingsChanged() {
         cylinder.updateParams(settings.shapeParameter1, settings.shapeParameter2);
         updateVBO();
     }
+    m_fogEnabled = settings.fog;
     update(); // asks for a PaintGL() call to occur
 }
 

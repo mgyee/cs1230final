@@ -24,7 +24,6 @@ void main()
     vec4 skyColor = texture(skybox, TexCoords);
 
         if (fog) {
-            // Calculate distance from camera to skybox
             float distance = length(TexCoords);
             float fogFactor = calculateFogFactor(distance, fogDensity);
 

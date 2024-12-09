@@ -57,6 +57,16 @@ void MainWindow::initialize() {
     filter2->setText(QStringLiteral("Kernel-Based Filter"));
     filter2->setChecked(false);
 
+    // checkbox for FXAA
+    filter3 = new QCheckBox();
+    filter3->setText(QStringLiteral("FXAA"));
+    filter3->setChecked(false);
+
+    // checkbox for fog
+    filter4 = new QCheckBox();
+    filter4->setText(QStringLiteral("Fog"));
+    filter4->setChecked(false);
+
     // Create file uploader for scene file
     uploadFile = new QPushButton();
     uploadFile->setText(QStringLiteral("Upload Scene File"));
@@ -176,6 +186,8 @@ void MainWindow::initialize() {
     vLayout->addWidget(filters_label);
     vLayout->addWidget(filter1);
     vLayout->addWidget(filter2);
+    vLayout->addWidget(filter3);
+    vLayout->addWidget(filter4);
     // Extra Credit:
     vLayout->addWidget(ec_label);
     vLayout->addWidget(ec1);
@@ -202,6 +214,8 @@ void MainWindow::finish() {
 void MainWindow::connectUIElements() {
     connectPerPixelFilter();
     connectKernelBasedFilter();
+    connectFXAA();
+    connectFog();
     connectUploadFile();
     connectSaveImage();
     connectParam1();
@@ -217,6 +231,14 @@ void MainWindow::connectPerPixelFilter() {
 
 void MainWindow::connectKernelBasedFilter() {
     connect(filter2, &QCheckBox::clicked, this, &MainWindow::onKernelBasedFilter);
+}
+
+void MainWindow::connectFXAA() {
+    connect(filter3, &QCheckBox::clicked, this, &MainWindow::onFXAA);
+}
+
+void MainWindow::connectFog() {
+    connect(filter4, &QCheckBox::clicked, this, &MainWindow::onFog);
 }
 
 void MainWindow::connectUploadFile() {
@@ -265,6 +287,16 @@ void MainWindow::onPerPixelFilter() {
 
 void MainWindow::onKernelBasedFilter() {
     settings.kernelBasedFilter = !settings.kernelBasedFilter;
+    realtime->settingsChanged();
+}
+
+void MainWindow::onFXAA() {
+    settings.FXAA = !settings.FXAA;
+    realtime->settingsChanged();
+}
+
+void MainWindow::onFog() {
+    settings.fog = !settings.fog;
     realtime->settingsChanged();
 }
 
