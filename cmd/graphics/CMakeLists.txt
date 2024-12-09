@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 # Sets project name
 project(projects_realtime LANGUAGES CXX C)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -13,12 +14,31 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Set the gRPC installation path
+set(gRPC_DIR /Users/alexandercueva/.local/lib/cmake/grpc)
+
+set(Abseil_DIR /opt/homebrew/opt/abseil/lib/cmake/absl)
+find_package(absl REQUIRED)
+
+# Set the Protobuf installation path
+set(Protobuf_DIR /opt/homebrew/opt/protobuf/lib/cmake/protobuf)
+
+# Find Protobuf
+find_package(Protobuf REQUIRED)
+
+# # Find gRPC
+find_package(gRPC CONFIG REQUIRED)
+
 # Specifies required Qt components
 find_package(Qt6 REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS Gui)
 find_package(Qt6 REQUIRED COMPONENTS OpenGL)
 find_package(Qt6 REQUIRED COMPONENTS OpenGLWidgets)
 find_package(Qt6 REQUIRED COMPONENTS Xml)
+# Add these lines near the top of your CMakeLists.txt, after the existing find_package commands
+# find_package(Protobuf REQUIRED)
+# find_package(gRPC REQUIRED)
+
 
 # Allows you to include files from within those directories, without prefixing their filepaths
 include_directories(src)
@@ -46,6 +66,7 @@ add_executable(${PROJECT_NAME}
     src/shapes/sphere.h src/shapes/sphere.cpp
     src/shapes/cylinder.h src/shapes/cylinder.cpp
     src/camera/camera.h src/camera/camera.cpp
+    client.h client.cpp
 )
 
 # GLM: this creates its library and allows you to `#include "glm/..."`
@@ -55,6 +76,7 @@ add_subdirectory(entt)
 
 # GLEW: this creates its library and allows you to `#include "GL/glew.h"`
 add_library(StaticGLEW STATIC glew/src/glew.c
+
 
 )
 include_directories(${PROJECT_NAME} PRIVATE glew/include)
@@ -67,6 +89,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt::OpenGL
     Qt::OpenGLWidgets
     Qt::Xml
+    absl::flags
+    gRPC::grpc++
+    protobuf::libprotobuf
     StaticGLEW
 )
 
@@ -98,3 +123,7 @@ endif()
 if (APPLE)
   set(CMAKE_CXX_FLAGS "-Wno-deprecated-volatile")
 endif()
+
+# set(PROTOC_EXECUTABLE /Users/alexandercueva/anaconda3/bin/protoc)
+# execute_process(COMMAND protoc --version OUTPUT_VARIABLE PROTOC_VERSION)
+# message(STATUS "Using protoc version: ${PROTOC_VERSION}")

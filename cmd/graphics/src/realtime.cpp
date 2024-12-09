@@ -77,8 +77,8 @@ void Realtime::initializeGL() {
 
     glClearColor(0, 0, 0, 1);
 
-    m_shader = ShaderLoader::createShaderProgram("resources/shaders/default.vert", "resources/shaders/default.frag");
-    m_texture_shader = ShaderLoader::createShaderProgram("resources/shaders/texture.vert", "resources/shaders/texture.frag");
+    m_shader = ShaderLoader::createShaderProgram("/Users/alexandercueva/Desktop/Brown-University/Junior/1st-Semester/CSCI1680/DEV-ENVIRONMENT/home/temp/cs1230final/cmd/graphics/resources/shaders/default.vert", "/Users/alexandercueva/Desktop/Brown-University/Junior/1st-Semester/CSCI1680/DEV-ENVIRONMENT/home/temp/cs1230final/cmd/graphics/resources/shaders/default.frag");
+    m_texture_shader = ShaderLoader::createShaderProgram("/Users/alexandercueva/Desktop/Brown-University/Junior/1st-Semester/CSCI1680/DEV-ENVIRONMENT/home/temp/cs1230final/cmd/graphics/resources/shaders/texture.vert", "/Users/alexandercueva/Desktop/Brown-University/Junior/1st-Semester/CSCI1680/DEV-ENVIRONMENT/home/temp/cs1230final/cmd/graphics/resources/shaders/texture.frag");
 
     glGenBuffers(1, &m_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
