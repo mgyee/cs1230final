@@ -53,6 +53,11 @@ add_subdirectory(glm)
 
 add_subdirectory(entt)
 
+# for networks
+#add_subdirectory(${CMAKE_SOURCE_DIR}/../grpc/examples/cpp/helloworld grpc_build)
+#target_link_libraries(${PROJECT_NAME} PRIVATE grpc_client)
+#include_directories(${CMAKE_BINARY_DIR}/../grpc/examples/cpp/helloworld)
+
 # GLEW: this creates its library and allows you to `#include "GL/glew.h"`
 add_library(StaticGLEW STATIC glew/src/glew.c
 

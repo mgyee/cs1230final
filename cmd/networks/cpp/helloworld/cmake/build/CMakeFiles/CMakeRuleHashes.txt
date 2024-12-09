@@ -1,2 +1,0 @@
-# Hashes of file build rules.
-5d92293f5cf53d76f15e009c77a699ef helloworld.pb.cc
