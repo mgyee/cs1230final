@@ -19,10 +19,10 @@ type server struct {
 
 var playerInfo []*pb.Player
 var gameInfoMutex *sync.Mutex
-var id int64 = 0
+var id int32 = 0
 var idMutex *sync.Mutex
 
-func updatePlayerInformation(id int64, info pb.Player) {
+func updatePlayerInformation(id int32, info pb.Player) {
 	gameInfoMutex.Lock()
 	defer gameInfoMutex.Unlock()
 
@@ -34,7 +34,7 @@ func printPlayerInfo() {
 	defer gameInfoMutex.Unlock()
 
 	for _, player := range playerInfo {
-		fmt.Printf("Player %d: with position, %d, %d, %d\n", player.PlayerId, player.PosX, player.PosY, player.PosZ)
+		fmt.Printf("Player %d: with position, %f, %f, %f\n", player.PlayerId, player.PosX, player.PosY, player.PosZ)
 	} 
 }
 
@@ -49,7 +49,7 @@ func (s *server) RegisterPlayer(ctx context.Context, req *pb.RegisterPlayerReque
 	playerInfo = append(playerInfo, &pb.Player{})
 	gameInfoMutex.Unlock()
 
-	//printPlayerInfo()
+	printPlayerInfo()
 	
 	return &pb.RegisterPlayerResponse{
 		PlayerId: p_id,

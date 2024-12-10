@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func main() {
@@ -42,9 +44,10 @@ func main() {
 
 
 	// probably do more robust later
-	if string(buffer) != "connecting" {
-		log.Fatalf("Wrong connection from cpp client")
-	}
+	
+	// if string(buffer) != "c" {
+	// 	log.Fatalf("Wrong connection from cpp client")
+	// }
 
 	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
 	if err != nil {
@@ -77,33 +80,80 @@ func main() {
 	defer cancel()
 	//id := response.PlayerId
 	
-
+	//prevState := make([]byte, 0)
 	for {
 		// double check how this works in go, not reseting the buffer
 		num, err = cppConn.Read(buffer)
+
+		if err != nil {
+			log.Fatalf("Failed to read from socket: %v", err)
+		}
 		// unmarshal the stuff here
 		// send player update to the server
 		// with the received response, send it over the tcpconn
 		gameReq := &pb.GetGameStateRequest{}
 		// fill this out
 		var player pb.Player
-		gameReq.Player = player
+		bytesToPlayerStruct(buffer, num, &player)
+		gameReq.Player = &player
 		response, err := client.GetGameState(ctx, gameReq)
-		if err == context.DeadlineExceeded {
+		if status.Code(err)  == codes.DeadlineExceeded {
 			// send a random byte to say error
+			// fmt.Println("skipped the deadline")
+			// _, err = cppConn.Write(prevState)
+			// if err != nil {
+			// 	log.Fatalf("Failed to write to the socket %v", err)
+			// }
 			continue
 		} else if err != nil {
 			log.Fatalf("Failed to call MyMethod: %v", err)
 		}
 
-		gameStateBuffer, err := marshalGameState(respoinse.GameState)
+		gameStateBuffer, err := marshalGameState(response.GameState)
+		//prevState = gameStateBuffer
+		if err != nil {
+			log.Fatalf("Failed to marshall game state: %v", err)
+		}
 		// write the size of the response back to our cpp client
-		_, err = cppConn.Write(gameStateBuffer)
+		sent, err := cppConn.Write(gameStateBuffer)
+		if err != nil {
+			log.Fatalf("Failed to write to the socket %v", err)
+		}
+		_ = sent
+		//fmt.Printf("sent %d bytes\n", sent)
+
 	}
 }
 
-func bytesToPlayerStruct() {
-	
+func bytesToPlayerStruct(buf []byte, n int, player *pb.Player) {
+	data := buf[:n]
+
+	reader := bytes.NewReader(data[:4])
+	err := binary.Read(reader, binary.BigEndian, &player.PlayerId)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	offset := 4
+	gameData := make([]float32, 6)
+
+	for i := range 6 {
+		reader := bytes.NewReader(data[offset:offset + 4])
+		err := binary.Read(reader, binary.BigEndian, &gameData[i])
+		if err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+		offset += 4
+	}
+
+	player.PosX = gameData[0]
+	player.PosY = gameData[1]
+	player.PosZ = gameData[2]
+	player.VelX = gameData[3]
+	player.VelY = gameData[4]
+	player.VelZ = gameData[5]	
 }
 
 func marshalGameState(gameState *pb.GameState) ([]byte, error) {
@@ -111,8 +161,8 @@ func marshalGameState(gameState *pb.GameState) ([]byte, error) {
 
 	// Write each value to the buffer
 	for _, player := range gameState.Players {
-		if err := marshalPlayer(&player, buf) {
-			return nil, fmt.Errorf("error encoding player %p: %w", player, err)
+		if err := marshalPlayer(player, buf); err != nil {
+			return nil, fmt.Errorf("error encoding player %d: %w", player.PlayerId, err)
 		}
 	}
 
@@ -124,12 +174,12 @@ func marshalPlayer(player *pb.Player, buf *bytes.Buffer) (error) {
 	// List of values to encode
 	values := []interface{}{
 		int32(player.PlayerId),
-		float64(player.PosX),
-		float64(player.PosY),
-		float64(player.PosZ),
-		float64(player.VelX),
-		float64(player.VelY),
-		float64(player.VelZ),
+		float32(player.PosX),
+		float32(player.PosY),
+		float32(player.PosZ),
+		float32(player.VelX),
+		float32(player.VelY),
+		float32(player.VelZ),
 	}
 
 	// Write each value to the buffer
