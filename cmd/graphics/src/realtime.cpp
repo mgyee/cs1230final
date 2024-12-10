@@ -144,15 +144,16 @@ Player deserializePlayer(const char* buffer) {
 }
 
 void Realtime::run_client() {
-    TCPClient client("127.0.0.1", 50050);
-    bool success = client.connectToServer();
-    if (!success) {
-        std::cout << "failed to connect loser" << std::endl;
-        return;
-    }
+    UDPClient client("127.0.0.1", 12345, 5);
+    // bool success = client.connectToServer();
+    // if (!success) {
+    //     std::cout << "failed to connect loser" << std::endl;
+    //     return;
+    // }
 
     char buffer[256] = {'c', 0};
     int status;
+    bool success;
 
 
     success = client.sendMessage(buffer, 1);
