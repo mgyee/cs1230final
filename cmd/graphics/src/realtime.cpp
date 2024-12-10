@@ -26,8 +26,8 @@ Realtime::Realtime(QWidget *parent)
     m_keyMap[Qt::Key_Space]   = false;
 
     // If you must use this function, do not edit anything above this
-    TCPClient client("127.0.0.1", 50050);
-    client.connectAndSend("Hello, Server!");
+    // TCPClient client("127.0.0.1", 50050);
+    // client.connectAndSend("Hello, Server!");
 }
 
 void Realtime::finish() {
@@ -58,9 +58,25 @@ void Realtime::run_client() {
         std::cout << "failed to connect loser" << std::endl;
         return;
     }
-    // make the client lock the struct mutex, and send to our go client
+
     char buffer[1024] = {0};
     int status;
+
+    success = client.sendMessage("connecting");
+    // maybe no timeout on this one
+    status = client.readMessage(buffer);
+
+    // from this message, set the id to the updated id
+    //my_id = buffer[0];
+
+    // assuming that there is only one player at this point:
+    // auto view = registry.view<Player>();
+    // for (auto entity : view) {
+    //view.get<Player>(entity).id = my_id;
+
+    // make the client lock the struct mutex, and send to our go client
+    int curr_id;
+    // bool found[4] = {false, false, false, false}
     while (true) {
         success = client.sendMessage("hello");
         if (!success) {
@@ -75,13 +91,27 @@ void Realtime::run_client() {
             return;
         } else if (status == 0) {
             // use the world state, take mutex
+            // prep data from the buffer we get
             registry_mutex.lock();
             // update the registry
-            auto &view = view.get<Player>(entity);
+            // for every update that we got
+            curr_id = -2;
+            // curr_id = id from the update
+            //
+            // if !found[curr_id] {
+            // auto newEntity = registry.create();
+            // Player newPlayerStruct = {created from buffer data}
+            //  registry.emplace<Player>(newEntity, newPlayerStruct);
+            // found[curr_id] = true
+            // continue or else into the block below
+            //   }
+            auto view = registry.view<Player>();
             for (auto entity : view) {
-                entity.get<Player>(entity).pos = glm::vec3(view.pos.x, view.pos.y, view.pos.z);
-                entity.get<Player>(entity).vel = glm::vec3(view.vel.x, view.vel.y, view.vel.z);
-
+                if (curr_id == view.get<Player>(entity).id) {
+                    // data on the right should be actual updates
+                    view.get<Player>(entity).position = glm::vec4(0.0);
+                    view.get<Player>(entity).velocity = glm::vec4(1.0);
+                }
             }
             registry_mutex.unlock();
         } else if (status == 1) {
