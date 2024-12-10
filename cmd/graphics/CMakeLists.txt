@@ -15,19 +15,22 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Set the gRPC installation path
-set(gRPC_DIR /Users/alexandercueva/.local/lib/cmake/grpc)
+# set(gRPC_DIR C:/Users/karav/OneDrive/Documents/CS1230/cs1230final/grpc)
 
-set(Abseil_DIR /opt/homebrew/opt/abseil/lib/cmake/absl)
-find_package(absl REQUIRED)
+# add_subdirectory(abseil)
+#find_package(absl REQUIRED)
 
 # Set the Protobuf installation path
-set(Protobuf_DIR /opt/homebrew/opt/protobuf/lib/cmake/protobuf)
+#set(Protobuf_DIR /opt/homebrew/opt/protobuf/lib/cmake/protobuf)
+#add_subdirectory(protobuf)
+include_directories(
+${CMAKE_BINARY_DIR}/third_party/grpc/include)
 
 # Find Protobuf
-find_package(Protobuf REQUIRED)
 
 # # Find gRPC
-find_package(gRPC CONFIG REQUIRED)
+#find_package(gRPC CONFIG REQUIRED)
+# add_subdirectory(third_party/grpc)
 
 # Specifies required Qt components
 find_package(Qt6 REQUIRED COMPONENTS Core)
@@ -66,7 +69,7 @@ add_executable(${PROJECT_NAME}
     src/shapes/sphere.h src/shapes/sphere.cpp
     src/shapes/cylinder.h src/shapes/cylinder.cpp
     src/camera/camera.h src/camera/camera.cpp
-    client.h client.cpp
+    src/clientwin.h src/clientwin.cpp
 )
 
 # GLM: this creates its library and allows you to `#include "glm/..."`
@@ -94,10 +97,12 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt::OpenGL
     Qt::OpenGLWidgets
     Qt::Xml
-    absl::flags
-    gRPC::grpc++
-    protobuf::libprotobuf
+    # absl::flags
+    # gRPC::grpc++
+    #protobuf::libprotobuf
     StaticGLEW
+    # absl::strings
+    # absl::base
 )
 
 # Specifies other files
@@ -117,6 +122,7 @@ if (WIN32)
   target_link_libraries(${PROJECT_NAME} PRIVATE
     opengl32
     glu32
+    ws2_32
   )
 endif()
 

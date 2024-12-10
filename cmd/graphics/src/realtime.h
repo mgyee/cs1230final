@@ -21,6 +21,7 @@
 #include "shapes/cube.h"
 #include "shapes/sphere.h"
 #include "shapes/cylinder.h"
+#include "clientwin.h"
 
 struct glShape {
     RenderShapeData shape;
@@ -122,6 +123,8 @@ private:
     entt::registry registry;
 
     entt::entity camera_ent;
+
+//TCPClient client;
 
     void updateVBO();
     void paintTexture(GLuint texture, bool pixelFilter, bool kernelFilter);
