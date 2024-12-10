@@ -5,12 +5,41 @@ import (
 	"fmt"
 	pb "graphicsFinal/generated/proto"
 	"log"
+	"net"
 	"time"
 
 	"google.golang.org/grpc"
 )
 
 func main() {
+
+	lis, err := net.Listen("tcp", ":50050")
+	if err != nil {
+		log.Fatalf("Failed to listen: %v", err)
+	}
+
+	cppConn, err := lis.Accept()
+
+	if err != nil {
+		log.Fatalf("Failed to connect to cpp client: %v", err)
+	}
+
+	fmt.Println("Past connection")
+
+	buffer := make([]byte, 1024)
+	num, err := cppConn.Read(buffer)
+
+	if err != nil {
+		log.Fatalf("Failed to read from cppSock: %v", err)
+	}
+	_ = cppConn
+	_ = num
+
+	fmt.Println(string(buffer))
+
+	defer cppConn.Close()
+
+
 	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Failed to connect: %v", err)
