@@ -21,7 +21,9 @@
 #include "shapes/cube.h"
 #include "shapes/sphere.h"
 #include "shapes/cylinder.h"
+#include "clientarm.h"
 #include "clientwin.h"
+#include <mutex>
 
 struct glShape {
     RenderShapeData shape;
@@ -29,12 +31,21 @@ struct glShape {
     unsigned long length;
 };
 
-struct Position {
-    glm::vec4 value;
-};
+// struct Position {
+//     glm::vec4 value;
+// };
 
-struct Velocity {
-    glm::vec4 value;
+// struct Velocity {
+//     glm::vec4 value;
+// };
+
+// struct Id {
+// };
+
+struct Player {
+    int id;
+    glm::vec4 position;
+    glm::vec4 velocity;
 };
 
 struct Renderable {
@@ -121,11 +132,18 @@ private:
 
     // Final project 
     entt::registry registry;
+    std::mutex registry_mutex;
 
+    // Player entity, needs an ID associated
+    // when put into the registry, use -1 as shown below
     entt::entity camera_ent;
+
+
+    int my_id = -1;
 
 //TCPClient client;
 
     void updateVBO();
     void paintTexture(GLuint texture, bool pixelFilter, bool kernelFilter);
+    void run_client();
 };

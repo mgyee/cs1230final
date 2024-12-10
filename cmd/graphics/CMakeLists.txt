@@ -69,7 +69,7 @@ add_executable(${PROJECT_NAME}
     src/shapes/sphere.h src/shapes/sphere.cpp
     src/shapes/cylinder.h src/shapes/cylinder.cpp
     src/camera/camera.h src/camera/camera.cpp
-    src/clientwin.h src/clientwin.cpp
+    src/clientarm.h src/clientarm.cpp
 )
 
 # GLM: this creates its library and allows you to `#include "glm/..."`

@@ -51,6 +51,46 @@ void Realtime::finish() {
     this->doneCurrent();
 }
 
+void Realtime::run_client() {
+    TCPClient client("127.0.0.1", 50050);
+    bool success = client.connectToServer();
+    if (!success) {
+        std::cout << "failed to connect loser" << std::endl;
+        return;
+    }
+    // make the client lock the struct mutex, and send to our go client
+    char buffer[1024] = {0};
+    int status;
+    while (true) {
+        success = client.sendMessage("hello");
+        if (!success) {
+            std::cout << "tcp connection has been closed" << std::endl;
+            return;
+        }
+
+        // update stuff; so read, timeout, update
+        status = client.readMessage(buffer);
+        if (status == -1) {
+            std::cout << "closing because of err in read" << std::endl;
+            return;
+        } else if (status == 0) {
+            // use the world state, take mutex
+            registry_mutex.lock();
+            // update the registry
+            auto &view = view.get<Player>(entity);
+            for (auto entity : view) {
+                entity.get<Player>(entity).pos = glm::vec3(view.pos.x, view.pos.y, view.pos.z);
+                entity.get<Player>(entity).vel = glm::vec3(view.vel.x, view.vel.y, view.vel.z);
+
+            }
+            registry_mutex.unlock();
+        } else if (status == 1) {
+            // this will just continue because we will base our stuff off
+            // current world state
+            continue;
+        }
+    }
+}
 void Realtime::initializeGL() {
     m_devicePixelRatio = this->devicePixelRatio();
 
@@ -147,6 +187,9 @@ void Realtime::initializeGL() {
     glBindVertexArray(0);
 
     makeFBO();
+
+    std::thread myThread(run_client);
+    myThread.detach();
 }
 
 void Realtime::makeFBO(){
@@ -346,6 +389,11 @@ void Realtime::updateVBO() {
     if ((int)m_vbo < 0) {
         return;
     }
+
+    // DEBUG: IF NOTHING SHOWS AFTER
+    // if (my_id != -1) {
+    //     return;
+    // }
     std::vector<float> shapeData;
     unsigned long index = 0;
     glShapes.clear();
