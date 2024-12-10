@@ -46,6 +46,9 @@ add_executable(${PROJECT_NAME}
     src/shapes/sphere.h src/shapes/sphere.cpp
     src/shapes/cylinder.h src/shapes/cylinder.cpp
     src/camera/camera.h src/camera/camera.cpp
+    src/stb_image.h
+    resources/shaders/texture.frag resources/shaders/texture.vert
+    resources/shaders/skybox.frag resources/shaders/skybox.vert
 )
 
 # GLM: this creates its library and allows you to `#include "glm/..."`
@@ -55,6 +58,7 @@ add_subdirectory(entt)
 
 # GLEW: this creates its library and allows you to `#include "GL/glew.h"`
 add_library(StaticGLEW STATIC glew/src/glew.c
+    src/stb_image.h
 
 )
 include_directories(${PROJECT_NAME} PRIVATE glew/include)
