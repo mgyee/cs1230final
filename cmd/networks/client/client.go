@@ -31,7 +31,7 @@ func main() {
 	defer cppConn.Close()
 	fmt.Println("Past connection")
 
-	buffer := make([]byte, 1600)
+	buffer := make([]byte, 256)
 	// Read in the first thing, don't care what it is, just make
 	// a request for a player id
 	num, err := cppConn.Read(buffer)
@@ -76,13 +76,9 @@ func main() {
 		log.Fatalf("Failed to write to cppSock: %v", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	//id := response.PlayerId
-	
-	//prevState := make([]byte, 0)
 	for {
 		// double check how this works in go, not reseting the buffer
+		buffer := make([]byte, 256)
 		num, err = cppConn.Read(buffer)
 
 		if err != nil {
@@ -96,10 +92,12 @@ func main() {
 		var player pb.Player
 		bytesToPlayerStruct(buffer, num, &player)
 		gameReq.Player = &player
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		response, err := client.GetGameState(ctx, gameReq)
+		cancel()
 		if status.Code(err)  == codes.DeadlineExceeded {
 			// send a random byte to say error
-			// fmt.Println("skipped the deadline")
+			fmt.Println("skipped the deadline")
 			// _, err = cppConn.Write(prevState)
 			// if err != nil {
 			// 	log.Fatalf("Failed to write to the socket %v", err)
@@ -108,7 +106,6 @@ func main() {
 		} else if err != nil {
 			log.Fatalf("Failed to call MyMethod: %v", err)
 		}
-
 		gameStateBuffer, err := marshalGameState(response.GameState)
 		//prevState = gameStateBuffer
 		if err != nil {
@@ -121,7 +118,6 @@ func main() {
 		}
 		_ = sent
 		//fmt.Printf("sent %d bytes\n", sent)
-
 	}
 }
 
