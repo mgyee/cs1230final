@@ -7,6 +7,7 @@
 #include "settings.h"
 #include "utils/shaderloader.h"
 #include <thread>
+#include <chrono>
 
 #include <numbers>
 
@@ -82,7 +83,7 @@ void serializePlayer(const Player& player, char* buffer) {
     uint32_t networkVelocityX = htonf(player.velocity.x);
     uint32_t networkVelocityY = htonf(player.velocity.y);
     uint32_t networkVelocityZ = htonf(player.velocity.z);
-    uint32_t networkVelocityW = htonf(player.velocity.w);
+    //uint32_t networkVelocityW = htonf(player.velocity.w);
 
     memcpy(buffer + 16, &networkVelocityX, sizeof(uint32_t));
     memcpy(buffer + 20, &networkVelocityY, sizeof(uint32_t));
@@ -150,7 +151,7 @@ void Realtime::run_client() {
         return;
     }
 
-    char buffer[1024] = {'c', 0};
+    char buffer[256] = {'c', 0};
     int status;
 
 
@@ -161,7 +162,7 @@ void Realtime::run_client() {
         return;
     }
     // maybe no timeout on this one
-    status = client.readMessage(buffer, 1024);
+    status = client.readMessage(buffer, 256);
 
     if (status == -1) {
         std::cout << "closing because of err in read" << std::endl;
@@ -188,9 +189,10 @@ void Realtime::run_client() {
     }
 
     int updates;
+    int total = 0;
     bool found[4] = {false, false, false, false};
     while (true) {
-        //memset(buffer, 0, 1024);
+        memset(buffer, 0, 256);
         // make a message and then marshal
         // update message
         registry_mutex.lock();
@@ -204,9 +206,13 @@ void Realtime::run_client() {
 
         // update stuff; so read, timeout, update
         // double check status
-        status = client.readMessage(buffer, 1024);
+        status = client.readMessage(buffer, 256);
+        // std::cout << "current read: " << status << std::endl;
+        // total += status;
+        // std::cout << "total bytes read :" << total << std::endl;
         if (status == -1) {
             std::cout << "closing because of err in read" << std::endl;
+            //break;
             return;
         } else if (status > 0) {
             // use the world state, take mutex
@@ -257,6 +263,10 @@ void Realtime::run_client() {
         }
         //
     }
+
+    // std::this_thread::sleep_for(std::chrono::seconds(2));
+    // std::cout << "now I am closing" << std::endl;
+    // return;
 }
 
 void Realtime::initializeGL() {
