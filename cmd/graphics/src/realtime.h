@@ -23,6 +23,7 @@
 #include "shapes/cylinder.h"
 //#include "clientarm.h"
 #include "clientwin.h"
+#include "udpclientwin.h"
 #include <mutex>
 
 struct glShape {
