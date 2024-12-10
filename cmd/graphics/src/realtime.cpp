@@ -26,6 +26,8 @@ Realtime::Realtime(QWidget *parent)
     m_keyMap[Qt::Key_Space]   = false;
 
     // If you must use this function, do not edit anything above this
+    TCPClient client("127.0.0.1", 50050);
+    client.connectAndSend("Hello, Server!");
 }
 
 void Realtime::finish() {
@@ -77,8 +79,8 @@ void Realtime::initializeGL() {
 
     glClearColor(0, 0, 0, 1);
 
-    m_shader = ShaderLoader::createShaderProgram("resources/shaders/default.vert", "resources/shaders/default.frag");
-    m_texture_shader = ShaderLoader::createShaderProgram("resources/shaders/texture.vert", "resources/shaders/texture.frag");
+    m_shader = ShaderLoader::createShaderProgram(":/resources/shaders/default.vert", ":/resources/shaders/default.frag");
+    m_texture_shader = ShaderLoader::createShaderProgram(":/resources/shaders/texture.vert", ":/resources/shaders/texture.frag");
 
     glGenBuffers(1, &m_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
@@ -368,7 +370,7 @@ void Realtime::updateVBO() {
         case PrimitiveType::PRIMITIVE_MESH:
             break;
         }
-        glShape glShape = {shape, index, tempData.size() / 6};
+        glShape glShape = {shape, index, static_cast<unsigned long>(tempData.size() / 6)};
         glShapes.push_back(glShape);
 
         shapeData.insert(shapeData.end(), tempData.begin(), tempData.end());
@@ -378,7 +380,7 @@ void Realtime::updateVBO() {
         // registry.emplace<Position>(newEntity, shape.primitive.transform.position);
         // registry.emplace<Velocity>(newEntity, shape.primitive.transform.velocity);
         
-        Renderable newEntityRender = {index, tempData.size() / 6, 
+        Renderable newEntityRender = {index, static_cast<unsigned long>(tempData.size() / 6),
                                             shape.ctm, 
                                             shape.primitive.material.cAmbient, 
                                             shape.primitive.material.cDiffuse, 
