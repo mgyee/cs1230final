@@ -140,13 +140,15 @@ private:
     GLuint m_cubemap_texture;
 
     // fog parameters
-    bool m_fogEnabled = true;
+    bool m_fogEnabled = false;
     glm::vec4 m_fogColor = glm::vec4(0.9f, 0.45f, 0.3f, 1.0f);
     float m_fogDensity = 0.12f;
     float m_fogStart = 3.0f;
     float m_fogEnd = 10.0f;
     float m_fogHeight = 0.5f;
     float m_fogBaseHeight = 0.5f;
+
+    bool m_FXAAEnabled = false;
 
     void createSkybox();
     void loadCubeMap(std::vector<std::string> faces);

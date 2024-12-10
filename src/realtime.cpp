@@ -323,11 +323,6 @@ void Realtime::makeFBO(){
 }
 
 void Realtime::paintGL() {
-    if (settings.FXAA) {
-        std::cout << "FXAA is enabled" << "\n";
-    } else {
-        std::cout << "FXAA is NOT enabled" << "\n";
-    }
     // Students: anything requiring OpenGL calls every frame should be done here
 
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
@@ -453,6 +448,7 @@ void Realtime::paintTexture(GLuint texture, bool pixelFilter, bool kernelFilter)
 
     glUniform1i(glGetUniformLocation(m_texture_shader, "pixelFilter"), pixelFilter);
     glUniform1i(glGetUniformLocation(m_texture_shader, "kernelFilter"), kernelFilter);
+    glUniform1i(glGetUniformLocation(m_texture_shader, "FXAAEnabled"), m_FXAAEnabled);
 
     glBindVertexArray(m_fullscreen_vao);
     // Task 10: Bind "texture" to slot 0
@@ -608,6 +604,7 @@ void Realtime::settingsChanged() {
         updateVBO();
     }
     m_fogEnabled = settings.fog;
+    m_FXAAEnabled = settings.FXAA;
     update(); // asks for a PaintGL() call to occur
 }
 
@@ -692,7 +689,7 @@ void Realtime::timerEvent(QTimerEvent *event) {
 
     // Use deltaTime and m_keyMap here to move around
 
-    float units = 5.f * deltaTime;
+    float units = 2.f * deltaTime;
 
     auto view = registry.view<Position, Velocity>();
 
