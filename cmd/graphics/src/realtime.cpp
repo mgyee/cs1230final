@@ -6,6 +6,7 @@
 #include <iostream>
 #include "settings.h"
 #include "utils/shaderloader.h"
+#include <thread>
 
 #include <numbers>
 
@@ -51,6 +52,96 @@ void Realtime::finish() {
     this->doneCurrent();
 }
 
+uint32_t htonf(float value) {
+    union {
+        float f;
+        uint32_t i;
+    } converter;
+    converter.f = value;
+    return htonl(converter.i);
+}
+
+// Serialize Player struct to network byte order
+void serializePlayer(const Player& player, char* buffer) {
+    // Serialize id (4 bytes)
+    uint32_t networkId = htonl(player.id);
+    memcpy(buffer, &networkId, sizeof(uint32_t));
+
+    // Serialize position (4 * 4 = 16 bytes)
+    uint32_t networkPositionX = htonf(player.position.x);
+    uint32_t networkPositionY = htonf(player.position.y);
+    uint32_t networkPositionZ = htonf(player.position.z);
+    //uint32_t networkPositionW = htonf(player.position.w);
+
+    memcpy(buffer + 4, &networkPositionX, sizeof(uint32_t));
+    memcpy(buffer + 8, &networkPositionY, sizeof(uint32_t));
+    memcpy(buffer + 12, &networkPositionZ, sizeof(uint32_t));
+    //memcpy(buffer + 16, &networkPositionW, sizeof(uint32_t));
+
+    // Serialize velocity (4 * 4 = 16 bytes)
+    uint32_t networkVelocityX = htonf(player.velocity.x);
+    uint32_t networkVelocityY = htonf(player.velocity.y);
+    uint32_t networkVelocityZ = htonf(player.velocity.z);
+    uint32_t networkVelocityW = htonf(player.velocity.w);
+
+    memcpy(buffer + 16, &networkVelocityX, sizeof(uint32_t));
+    memcpy(buffer + 20, &networkVelocityY, sizeof(uint32_t));
+    memcpy(buffer + 24, &networkVelocityZ, sizeof(uint32_t));
+}
+
+// Deserialize from network byte order back to host byte order
+Player deserializePlayer(const char* buffer) {
+    Player player;
+
+    // Deserialize id
+    uint32_t networkId;
+    memcpy(&networkId, buffer, sizeof(uint32_t));
+    player.id = ntohl(networkId);
+
+    // Deserialize position
+    uint32_t networkPositionX, networkPositionY, networkPositionZ, networkPositionW;
+    memcpy(&networkPositionX, buffer + 4, sizeof(uint32_t));
+    memcpy(&networkPositionY, buffer + 8, sizeof(uint32_t));
+    memcpy(&networkPositionZ, buffer + 12, sizeof(uint32_t));
+
+    union {
+        uint32_t i;
+        float f;
+    } converter;
+
+    converter.i = ntohl(networkPositionX);
+    player.position.x = converter.f;
+
+    converter.i = ntohl(networkPositionY);
+    player.position.y = converter.f;
+
+    converter.i = ntohl(networkPositionZ);
+    player.position.z = converter.f;
+
+    converter.i = ntohl(networkPositionW);
+    player.position.w = 1.f;
+
+    // Deserialize velocity (same process as position)
+    uint32_t networkVelocityX, networkVelocityY, networkVelocityZ, networkVelocityW;
+    memcpy(&networkVelocityX, buffer + 16, sizeof(uint32_t));
+    memcpy(&networkVelocityY, buffer + 20, sizeof(uint32_t));
+    memcpy(&networkVelocityZ, buffer + 24, sizeof(uint32_t));
+
+    converter.i = ntohl(networkVelocityX);
+    player.velocity.x = converter.f;
+
+    converter.i = ntohl(networkVelocityY);
+    player.velocity.y = converter.f;
+
+    converter.i = ntohl(networkVelocityZ);
+    player.velocity.z = converter.f;
+
+    converter.i = ntohl(networkVelocityW);
+    player.velocity.w = 0.f;
+
+    return player;
+}
+
 void Realtime::run_client() {
     TCPClient client("127.0.0.1", 50050);
     bool success = client.connectToServer();
@@ -59,68 +150,114 @@ void Realtime::run_client() {
         return;
     }
 
-    char buffer[1024] = {0};
+    char buffer[1024] = {'c', 0};
     int status;
 
-    success = client.sendMessage("connecting");
-    // maybe no timeout on this one
-    status = client.readMessage(buffer);
 
-    // from this message, set the id to the updated id
-    //my_id = buffer[0];
+    success = client.sendMessage(buffer, 1);
+
+    if (!success) {
+        std::cout << "failed to send the connecting message" << std::endl;
+        return;
+    }
+    // maybe no timeout on this one
+    status = client.readMessage(buffer, 1024);
+
+    if (status == -1) {
+        std::cout << "closing because of err in read" << std::endl;
+        return;
+    }
+
+    int value;
+    memcpy(&value, buffer, sizeof(int));
+
+    // this is techincally just for ints, so not sure about this one
+    my_id = ntohl(value);
+    std::cout << "got id: " << my_id << std::endl;
+
 
     // assuming that there is only one player at this point:
-    // auto view = registry.view<Player>();
-    // for (auto entity : view) {
-    //view.get<Player>(entity).id = my_id;
+    auto view = registry.view<Player>();
+    entt::entity myself;
+    for (auto entity : view) {
+        if (view.get<Player>(entity).id == -1) {
+            myself = entity;
+            view.get<Player>(entity).id = my_id;
+            break;
+        }
+    }
 
-    // make the client lock the struct mutex, and send to our go client
-    int curr_id;
-    // bool found[4] = {false, false, false, false}
+    int updates;
+    bool found[4] = {false, false, false, false};
     while (true) {
-        success = client.sendMessage("hello");
+        //memset(buffer, 0, 1024);
+        // make a message and then marshal
+        // update message
+        registry_mutex.lock();
+        serializePlayer(registry.get<Player>(myself), buffer);
+        success = client.sendMessage(buffer, 28);
+        registry_mutex.unlock();
         if (!success) {
             std::cout << "tcp connection has been closed" << std::endl;
             return;
         }
 
         // update stuff; so read, timeout, update
-        status = client.readMessage(buffer);
+        // double check status
+        status = client.readMessage(buffer, 1024);
         if (status == -1) {
             std::cout << "closing because of err in read" << std::endl;
             return;
-        } else if (status == 0) {
+        } else if (status > 0) {
             // use the world state, take mutex
             // prep data from the buffer we get
+            updates = status / 28;
+            Player data[updates];
+
+            int offset = 0;
+            for (int i = 0; i < updates; i++) {
+                data[i] = deserializePlayer(buffer + offset);
+                offset += 28;
+            }
+
             registry_mutex.lock();
             // update the registry
             // for every update that we got
-            curr_id = -2;
-            // curr_id = id from the update
-            //
-            // if !found[curr_id] {
-            // auto newEntity = registry.create();
-            // Player newPlayerStruct = {created from buffer data}
-            //  registry.emplace<Player>(newEntity, newPlayerStruct);
-            // found[curr_id] = true
-            // continue or else into the block below
-            //   }
-            auto view = registry.view<Player>();
-            for (auto entity : view) {
-                if (curr_id == view.get<Player>(entity).id) {
-                    // data on the right should be actual updates
-                    view.get<Player>(entity).position = glm::vec4(0.0);
-                    view.get<Player>(entity).velocity = glm::vec4(1.0);
+            for (int i = 0; i < updates; i++) {
+                Player currPlayer = data[i];
+                // don't update yourself
+                if (currPlayer.id == my_id) {
+                    continue;
+                }
+                // curr_id = id from the update
+                //
+                if (!found[currPlayer.id]) {
+                    auto newEntity = registry.create();
+                    registry.emplace<Player>(newEntity, currPlayer);
+                    found[currPlayer.id] = true;
+                    continue;
+                }
+                auto view = registry.view<Player>();
+                for (auto entity : view) {
+                    if (currPlayer.id == view.get<Player>(entity).id) {
+                        // data on the right should be actual updates
+                        // placeholders
+                        view.get<Player>(entity).position = currPlayer.position;
+                        view.get<Player>(entity).velocity = currPlayer.velocity;
+                        break;
+                    }
                 }
             }
             registry_mutex.unlock();
-        } else if (status == 1) {
+        } else if (status == 0) {
             // this will just continue because we will base our stuff off
             // current world state
+            std::cerr << "Got to status 0\n";
             continue;
         }
     }
 }
+
 void Realtime::initializeGL() {
     m_devicePixelRatio = this->devicePixelRatio();
 
@@ -165,10 +302,6 @@ void Realtime::initializeGL() {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
 
     // creating one entity
-    // auto entity = registry.create();
-    // registry.emplace<Position>(entity, glm::vec3(0.0f, 0.0f, 0.0f));
-    // registry.emplace<Velocity>(entity, glm::vec3(0.0f, 0.0f, 0.0f));
-    // registry.emplace<Renderable>(entity, m_vao, m_shader, 10);
 
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -218,7 +351,12 @@ void Realtime::initializeGL() {
 
     makeFBO();
 
-    std::thread myThread(run_client);
+    camera_ent = registry.create();
+    Player myself = {-1, metaData.cameraData.pos, glm::vec4(0.0)};
+    registry.emplace<Player>(camera_ent, myself);
+
+    // need to bind this instance of realtime for the thread
+    std::thread myThread(std::bind(&Realtime::run_client, this));
     myThread.detach();
 }
 
@@ -371,6 +509,9 @@ void Realtime::sceneChanged() {
     m_camera.setHeightAngle(metaData.cameraData.heightAngle);
     m_camera.setViewMatrix(metaData.cameraData.pos, metaData.cameraData.look, metaData.cameraData.up);
     m_camera.setProjMatrix(settings.nearPlane, settings.farPlane);
+    registry_mutex.lock();
+    registry.get<Player>(camera_ent).position = metaData.cameraData.pos;
+    registry_mutex.unlock();
     updateVBO();
     glUseProgram(m_shader);
     int i = 0;
@@ -427,7 +568,9 @@ void Realtime::updateVBO() {
     std::vector<float> shapeData;
     unsigned long index = 0;
     glShapes.clear();
-    registry.clear();
+    registry_mutex.lock();
+    // handle camera as a special case?
+    registry.clear<Renderable>();
 
     for(auto &shape: metaData.shapes) {
         std::vector<float> tempData;
@@ -468,7 +611,7 @@ void Realtime::updateVBO() {
         registry.emplace<Renderable>(newEntity, newEntityRender);
         index += glShape.length;
     }
-    
+    registry_mutex.unlock();
     
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
     glBufferData(GL_ARRAY_BUFFER, shapeData.size() * sizeof(GLfloat), shapeData.data(), GL_STATIC_DRAW);
@@ -524,15 +667,15 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
         // Use deltaX and deltaY here to rotate
 
         if (m_mouseDown) {
-            float x_angle = deltaX * std::numbers::pi / 100.f;
+            float x_angle = deltaX * std::numbers::pi / 500.f;
             glm::vec3 u_x(0, -1, 0);
             float c_x = glm::cos(x_angle);
             float s_x = glm::sin(x_angle);
             float one_minus_c_x = 1.f - c_x;
 
             glm::vec3 u_y = -glm::normalize(glm::cross(glm::vec3(metaData.cameraData.look),
-                                                                glm::vec3(metaData.cameraData.up)));
-            float y_angle = deltaY * std::numbers::pi / 100.f;
+                                                       glm::vec3(metaData.cameraData.up)));
+            float y_angle = deltaY * std::numbers::pi / 500.f;
             float c_y = glm::cos(y_angle);
             float s_y = glm::sin(y_angle);
             float one_minus_c_y = 1.f - c_y;
@@ -546,16 +689,16 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
                                                            u_y.x*u_y.z*one_minus_c_y+u_y.y*s_y,
                                                            u_y.y*u_y.z*one_minus_c_y-u_y.x*s_y,
                                                            c_y+pow(u_y.z,2)*one_minus_c_y) *
-                                                glm::mat3(c_x + pow(u_x.x,2)*one_minus_c_x,
-                                                          u_x.x*u_x.y*one_minus_c_x+u_x.z*s_x,
-                                                          u_x.x*u_x.z*one_minus_c_x-u_x.y*s_x,
-                                                          u_x.x*u_x.y*one_minus_c_x-u_x.z*s_x,
-                                                          c_x+pow(u_x.y,2)*one_minus_c_x,
-                                                          u_x.y*u_x.z*one_minus_c_x+u_x.x*s_x,
-                                                          u_x.x*u_x.z*one_minus_c_x+u_x.y*s_x,
-                                                          u_x.y*u_x.z*one_minus_c_x-u_x.x*s_x,
-                                                          c_x+pow(u_x.z,2)*one_minus_c_x) *
-                                                    glm::vec3(metaData.cameraData.look), 1.0);
+                                                     glm::mat3(c_x + pow(u_x.x,2)*one_minus_c_x,
+                                                               u_x.x*u_x.y*one_minus_c_x+u_x.z*s_x,
+                                                               u_x.x*u_x.z*one_minus_c_x-u_x.y*s_x,
+                                                               u_x.x*u_x.y*one_minus_c_x-u_x.z*s_x,
+                                                               c_x+pow(u_x.y,2)*one_minus_c_x,
+                                                               u_x.y*u_x.z*one_minus_c_x+u_x.x*s_x,
+                                                               u_x.x*u_x.z*one_minus_c_x+u_x.y*s_x,
+                                                               u_x.y*u_x.z*one_minus_c_x-u_x.x*s_x,
+                                                               c_x+pow(u_x.z,2)*one_minus_c_x) *
+                                                     glm::vec3(metaData.cameraData.look), 1.0);
 
             m_camera.setViewMatrix(metaData.cameraData.pos, metaData.cameraData.look, metaData.cameraData.up);
         }
@@ -572,58 +715,86 @@ void Realtime::timerEvent(QTimerEvent *event) {
     // Use deltaTime and m_keyMap here to move around
 
     float units = 5.f * deltaTime;
-    
-    auto view = registry.view<Position, Velocity>();
+
+    // auto view = registry.view<Position, Velocity>();
 
     if (m_keyMap[Qt::Key_W]) {
-    
-        // const auto &vel = view.get<Velocity>(camera_ent);
-        auto &pos = view.get<Position>(camera_ent);
-        pos.value += units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
-        
-        // metaData.cameraData.pos += units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+        // auto &pos = view.get<Position>(camera_ent);
+        // pos.value += units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+        glm::vec4 move = units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+        move.y = 0;
+        metaData.cameraData.pos += move;
     }
     if (m_keyMap[Qt::Key_A]) {
-        auto &pos = view.get<Position>(camera_ent);
-        pos.value -= units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
-                                                      glm::vec3(metaData.cameraData.up)), 0));
-        // metaData.cameraData.pos -= units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
+        // auto &pos = view.get<Position>(camera_ent);
+        // pos.value -= units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
         //                                               glm::vec3(metaData.cameraData.up)), 0));
+        glm::vec4 move = units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
+                                                                     glm::vec3(metaData.cameraData.up)), 0));
+        move.y = 0;
+        metaData.cameraData.pos -= move;
     }
     if (m_keyMap[Qt::Key_S]) {
-        auto &pos = view.get<Position>(camera_ent);
-        pos.value -= units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
-        // metaData.cameraData.pos -= units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+        // auto &pos = view.get<Position>(camera_ent);
+        // pos.value -= units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+        glm::vec4 move = units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+        move.y = 0;
+        metaData.cameraData.pos -= move;
     }
     if (m_keyMap[Qt::Key_D]) {
-        auto &pos = view.get<Position>(camera_ent);
-        pos.value += units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
-                                                      glm::vec3(metaData.cameraData.up)), 0));
-        // metaData.cameraData.pos += units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
-        //                                                         glm::vec3(metaData.cameraData.up)), 0));
+        // auto &pos = view.get<Position>(camera_ent);
+        // pos.value += units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
+        //                                               glm::vec3(metaData.cameraData.up)), 0));
+        glm::vec4 move = units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
+                                                                     glm::vec3(metaData.cameraData.up)), 0));
+        move.y = 0;
+        metaData.cameraData.pos += move;
     }
-    if (m_keyMap[Qt::Key_Control]) {
-        // metaData.cameraData.pos -= units * glm::vec4(0, 1, 0, 0);
-    }
-    if (m_keyMap[Qt::Key_Space]) {
-        auto &pos = view.get<Position>(camera_ent);
-        auto &vel = view.get<Velocity>(camera_ent);
-        if (pos.value.y == 0) {
-            vel.value = glm::vec4(0, 5, 0, 0);
-        }
-        pos.value += deltaTime * vel.value;
-        vel.value -= deltaTime * 2;
+    // if (m_keyMap[Qt::Key_Control]) {
+    //     // metaData.cameraData.pos -= units * glm::vec4(0, 1, 0, 0);
+    // }
+    // if (m_keyMap[Qt::Key_Space]) {
+    //     auto &pos = view.get<Position>(camera_ent);
+    //     auto &vel = view.get<Velocity>(camera_ent);
+    //     if (pos.value.y == 0) {
+    //         vel.value = glm::vec4(0, 5, 0, 0);
+    //     }
+    //     pos.value += deltaTime * vel.value;
+    //     vel.value -= deltaTime * 2;
 
-        if (pos.value.y <= 0) {
-            pos.value.y = 0;
-            vel.value = glm::vec4(0);
+    //     if (pos.value.y <= 0) {
+    //         pos.value.y = 0;
+    //         vel.value = glm::vec4(0);
+    //     }
+    //     // metaData.cameraData.pos += units * glm::vec4(0, 1, 0, 0);
+    // }
+
+    if (m_isJumping) {
+        m_verticalVelocity += m_gravity * deltaTime;
+
+        metaData.cameraData.pos.y += m_verticalVelocity * deltaTime;
+
+        if (metaData.cameraData.pos.y <= m_groundLevel) {
+            metaData.cameraData.pos.y = m_groundLevel;
+            m_verticalVelocity = 0.0f;
+            m_isJumping = false;
         }
-        // metaData.cameraData.pos += units * glm::vec4(0, 1, 0, 0);
     }
 
+    if (m_keyMap[Qt::Key_Space] && !m_isJumping) {
+        m_isJumping = true;
+        m_verticalVelocity = m_jumpSpeed;
+    }
+    registry_mutex.lock();
+    registry.get<Player>(camera_ent).position = metaData.cameraData.pos;
+    registry_mutex.unlock();
+    // velocity can probably be taken from move
+    // orientation vector????
     m_camera.setViewMatrix(metaData.cameraData.pos, metaData.cameraData.look, metaData.cameraData.up);
 
     update(); // asks for a PaintGL() call to occur
+
+    //update(); // asks for a PaintGL() call to occur
 }
 
 // DO NOT EDIT

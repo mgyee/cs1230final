@@ -70,7 +70,7 @@ add_executable(${PROJECT_NAME}
     src/shapes/cylinder.h src/shapes/cylinder.cpp
     src/camera/camera.h src/camera/camera.cpp
     src/clientarm.h src/clientarm.cpp
-    #src/clientwin.h src/clientwin.cpp
+    src/clientwin.h src/clientwin.cpp
 )
 
 # GLM: this creates its library and allows you to `#include "glm/..."`
@@ -119,11 +119,13 @@ qt6_add_resources(${PROJECT_NAME} "Resources"
 
 # GLEW: this provides support for Windows (including 64-bit)
 if (WIN32)
+  find_package(Threads REQUIRED)
   add_compile_definitions(GLEW_STATIC)
   target_link_libraries(${PROJECT_NAME} PRIVATE
     opengl32
     glu32
     ws2_32
+    Threads::Threads
   )
 endif()
 

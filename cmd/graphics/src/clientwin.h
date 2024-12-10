@@ -12,15 +12,18 @@
 
 class TCPClient {
 private:
-    int clientSocket;
-    struct sockaddr_in serverAddress;
+    SOCKET clientSocket;
+    sockaddr_in serverAddress;
+    int timeoutSec;
 
 public:
-    TCPClient(const std::string& serverIP, int port);
-
-    void connectAndSend(const std::string& message);
-
+    TCPClient(const std::string& serverIP, int port, int timeoutSec = 5);
     ~TCPClient();
+
+    bool connectToServer();
+    bool sendMessage(char *buffer, int len);
+    int readMessage(char* buffer, size_t bufferSize);
+    void myClose();
 };
 
 #endif // CLIENTWIN_H

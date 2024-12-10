@@ -21,7 +21,7 @@
 #include "shapes/cube.h"
 #include "shapes/sphere.h"
 #include "shapes/cylinder.h"
-#include "clientarm.h"
+//#include "clientarm.h"
 #include "clientwin.h"
 #include <mutex>
 
@@ -137,6 +137,12 @@ private:
     // Player entity, needs an ID associated
     // when put into the registry, use -1 as shown below
     entt::entity camera_ent;
+
+    float m_verticalVelocity = 0.0f;
+    const float m_gravity = -9.8f;
+    const float m_jumpSpeed = 5.0f;
+    const float m_groundLevel = 1.0f;
+    bool m_isJumping = false;
 
 
     int my_id = -1;
