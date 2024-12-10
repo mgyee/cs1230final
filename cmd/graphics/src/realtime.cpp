@@ -69,16 +69,25 @@ void Realtime::run_client() {
     // from this message, set the id to the updated id
     //my_id = buffer[0];
 
-    // assuming that there is only one player at this point:
-    // auto view = registry.view<Player>();
-    // for (auto entity : view) {
-    //view.get<Player>(entity).id = my_id;
+    //assuming that there is only one player at this point:
+    auto view = registry.view<Player>();
+    for (auto entity : view) {
+        // Just to be sure we are overwriting our stuff
+        if (view.get<Player>(entity).id == -1) {
+            view.get<Player>(entity).id = my_id;
+            break;
+        }
+    }
 
     // make the client lock the struct mutex, and send to our go client
     int curr_id;
-    // bool found[4] = {false, false, false, false}
+    bool found[4] = {false, false, false, false};
     while (true) {
+        // make a message and then marshal
+        // update message
+        registry_mutex.lock();
         success = client.sendMessage("hello");
+        registry_mutex.unlock();
         if (!success) {
             std::cout << "tcp connection has been closed" << std::endl;
             return;
@@ -109,8 +118,10 @@ void Realtime::run_client() {
             for (auto entity : view) {
                 if (curr_id == view.get<Player>(entity).id) {
                     // data on the right should be actual updates
+                    // placeholders
                     view.get<Player>(entity).position = glm::vec4(0.0);
                     view.get<Player>(entity).velocity = glm::vec4(1.0);
+                    break;
                 }
             }
             registry_mutex.unlock();
@@ -119,6 +130,7 @@ void Realtime::run_client() {
             // current world state
             continue;
         }
+        //
     }
 }
 void Realtime::initializeGL() {

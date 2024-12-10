@@ -16,6 +16,9 @@ message Player {
   int64 pos_x = 2;
   int64 pos_y = 3;
   int64 pos_z = 4;
+  int64 vel_x = 5;
+  int64 vel_y = 6;
+  int64 vel_z = 7;
 }
 
 message RegisterPlayerRequest {}
