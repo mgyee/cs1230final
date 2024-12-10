@@ -186,5 +186,4 @@ func marshalPlayer(player *pb.Player, buf *bytes.Buffer) (error) {
 	}
 
 	return nil
-
 }
