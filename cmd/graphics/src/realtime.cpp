@@ -255,6 +255,7 @@ void Realtime::run_client() {
             std::cerr << "Got to status 0\n";
             continue;
         }
+        //
     }
 }
 
