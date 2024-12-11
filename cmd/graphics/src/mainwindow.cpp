@@ -9,8 +9,9 @@
 #include <QGroupBox>
 #include <iostream>
 
-void MainWindow::initialize() {
+void MainWindow::initialize(QString ip) {
     realtime = new Realtime;
+    realtime->ip = ip.toStdString();
     aspectRatioWidget = new AspectRatioWidget(this);
     aspectRatioWidget->setAspectWidget(realtime, 3.f/4.f);
     QHBoxLayout *hLayout = new QHBoxLayout; // horizontal alignment

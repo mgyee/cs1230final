@@ -14,7 +14,7 @@ class MainWindow : public QWidget
     Q_OBJECT
 
 public:
-    void initialize();
+    void initialize(QString ip);
     void finish();
 
 private:
