@@ -408,7 +408,7 @@ void Realtime::initializeGL() {
     // Task 1: Obtain image from filepath
     m_danielImage = QImage(daniel_filepath);
 
-    qDebug() << "Image details:"
+    qDebug() << "Daniel Image details:"
              << "Width:" << m_danielImage.width()
              << "Height:" << m_danielImage.height()
              << "Is null:" << m_danielImage.isNull()
@@ -445,7 +445,7 @@ void Realtime::initializeGL() {
     // Task 1: Obtain image from filepath
     m_gavinImage = QImage(gavin_filepath);
 
-    qDebug() << "Image details:"
+    qDebug() << "Gavin image details:"
              << "Width:" << m_gavinImage.width()
              << "Height:" << m_gavinImage.height()
              << "Is null:" << m_gavinImage.isNull()
@@ -476,6 +476,12 @@ void Realtime::initializeGL() {
     // Task 1: Obtain image from filepath
     m_evanImage = QImage(evan_filepath);
 
+     qDebug() << "Evan image details:"
+             << "Width:" << m_gavinImage.width()
+             << "Height:" << m_gavinImage.height()
+             << "Is null:" << m_gavinImage.isNull()
+             << "Format:" << m_gavinImage.format();
+
 
     // Task 2: Format image to fit OpenGL
     m_evanImage = m_evanImage.convertToFormat(QImage::Format_RGBA8888).mirrored();
@@ -487,7 +493,7 @@ void Realtime::initializeGL() {
     }
 
 
-    glActiveTexture(GL_TEXTURE5);
+    glActiveTexture(GL_TEXTURE6);
     glBindTexture(GL_TEXTURE_2D, m_evan_id);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_evanImage.width(), m_evanImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, m_evanImage.bits());
 
@@ -802,19 +808,24 @@ void Realtime::paintGL() {
 
         glUniform1f(glGetUniformLocation(m_shader, "shininess"), renderable.shininess);
 
+        // if (playerComponent.id != my_id && my_id == 0) {
+        //     std::cout << "Player id is " << playerComponent.id << "\n";
+        // }
         if (playerComponent.id == 0) {
             glUniform1i(glGetUniformLocation(m_shader, "isUsingDaniel"), true);
 
-        glActiveTexture(GL_TEXTURE4);
+                glActiveTexture(GL_TEXTURE4);
 
-        glBindTexture(GL_TEXTURE_2D, m_daniel_id);
+                glBindTexture(GL_TEXTURE_2D, m_daniel_id);
+
         } else if (playerComponent.id == 1) {
+            std::cout << "reached gavin\n";
             glUniform1i(glGetUniformLocation(m_shader, "isUsingGavin"), true);
 
-        glActiveTexture(GL_TEXTURE5);
+            glActiveTexture(GL_TEXTURE5);
 
-        glBindTexture(GL_TEXTURE_2D, m_gavin_id);
-        } else {
+            glBindTexture(GL_TEXTURE_2D, m_gavin_id);
+        } else if (playerComponent.id == 2) {
             glUniform1i(glGetUniformLocation(m_shader, "isUsingEvan"), true);
 
             glActiveTexture(GL_TEXTURE6);

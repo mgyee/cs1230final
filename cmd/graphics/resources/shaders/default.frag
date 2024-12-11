@@ -137,7 +137,7 @@ void main() {
         }
 
         if (isUsingATexture) {
-            vec4 mixed = mix(diffuse*diffuse_closeness, to_add, 0.5);
+            vec4 mixed = mix(diffuse*diffuse_closeness, to_add, 0.3);
             fragColor += f * I * (mixed + specular * specular_closeness);
         } else {
             fragColor += f * I * (diffuse * diffuse_closeness + specular * specular_closeness);

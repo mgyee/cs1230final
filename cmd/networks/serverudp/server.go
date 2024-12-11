@@ -73,6 +73,7 @@ func RegisterPlayer() int32 {
 
 func sendPlayerId(conn *net.UDPConn, addr *net.UDPAddr, player *Player) {
 	buf := new(bytes.Buffer)
+	fmt.Println("Player id we are trying to send: ", player.playerId)
 	err := binary.Write(buf, binary.BigEndian, player.PlayerId)
 	if err != nil {
 		fmt.Println("Error encoding integer:", err)
