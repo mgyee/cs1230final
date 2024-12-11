@@ -73,6 +73,9 @@ add_executable(${PROJECT_NAME}
     src/clientwin.h src/clientwin.cpp
     src/udpclientwin.h src/udpclientwin.cpp
     src/udpclientarm.h src/udpclientarm.cpp
+    src/stb_image.h
+    resources/shaders/texture.frag resources/shaders/texture.vert
+    resources/shaders/skybox.frag resources/shaders/skybox.vert
 )
 
 # GLM: this creates its library and allows you to `#include "glm/..."`
@@ -87,6 +90,7 @@ add_subdirectory(entt)
 
 # GLEW: this creates its library and allows you to `#include "GL/glew.h"`
 add_library(StaticGLEW STATIC glew/src/glew.c
+    src/stb_image.h
 
 
 )

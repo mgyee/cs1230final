@@ -4,6 +4,7 @@ out vec4 fragColor;
 
 in vec3 worldPos;
 in vec3 worldNorm;
+in vec4 eyeSpacePos;
 
 uniform vec4 ambient;
 
@@ -12,6 +13,14 @@ uniform vec4 specular;
 
 uniform float shininess;
 uniform vec4 camPos;
+
+uniform bool fog;
+uniform vec4 fogColor;
+uniform float fogDensity;
+uniform float fogStart;
+uniform float fogEnd;
+uniform float fogHeight;
+uniform float fogBaseHeight;
 
 struct Light
 {
@@ -26,6 +35,31 @@ struct Light
 
 uniform Light lights[8];
 uniform int lightsCount;
+
+
+float calculateVolumetricFogFactor(float eyeSpaceDepth, float worldHeight) {
+    // float baseFogFactor = 1.0 - exp(-fogDensity * eyeSpaceDepth);
+    float baseFogFactor = 1.0 - exp(-pow(fogDensity * eyeSpaceDepth, 2.0));
+
+    float heightFactor = smoothstep(fogBaseHeight, fogHeight, worldHeight);
+
+    float densityFactor = 1.0 - exp(-fogDensity * eyeSpaceDepth);
+
+    // return clamp(baseFogFactor * (1.0 - heightFactor), 0.0, 1.0);
+    return clamp(baseFogFactor * (1.0 - heightFactor) * densityFactor, 0.0, 1.0);
+}
+
+vec3 calculateFogColor(float worldHeight) {
+    vec3 baseFogColor = fogColor.rgb;
+
+    vec3 skyColor = vec3(0.7, 0.8, 1.0);
+    vec3 groundColor = vec3(0.8, 0.8, 0.8);
+
+    float heightBlend = smoothstep(fogBaseHeight, fogHeight, worldHeight);
+    vec3 dynamicFogColor = mix(groundColor, skyColor, heightBlend);
+
+    return mix(baseFogColor, dynamicFogColor, 0.5);
+}
 
 void main() {
     fragColor = ambient;
@@ -78,5 +112,17 @@ void main() {
         }
 
         fragColor += f * I * (diffuse * diffuse_closeness + specular * specular_closeness);
+
+
+
+        if (fog) {
+                float eyeSpaceDepth = abs(eyeSpacePos.z);
+
+                vec3 newFogColor = calculateFogColor(worldPos.y);
+
+                float fogFactor = calculateVolumetricFogFactor(eyeSpaceDepth, worldPos.y);
+
+                fragColor.rgb = mix(fragColor.rgb, newFogColor.rgb, fogFactor);
+            }
     }
 }

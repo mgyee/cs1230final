@@ -64,6 +64,13 @@ struct Renderable {
     glm::mat4 inverseTransposectm;
 };
 
+struct SkyBox {
+    unsigned int cubeMapTexture;
+    GLuint vao;
+    GLuint vbo;
+    GLuint shader;
+};
+
 class Realtime : public QOpenGLWidget
 {
 public:
@@ -146,7 +153,6 @@ private:
     const float m_groundLevel = 1.0f;
     bool m_isJumping = false;
 
-
     int my_id = -1;
 
 //TCPClient client;
@@ -154,4 +160,25 @@ private:
     void updateVBO();
     void paintTexture(GLuint texture, bool pixelFilter, bool kernelFilter);
     void run_client();
+
+    // skybox parameters
+    GLuint m_skybox_shader;
+    GLuint m_skybox_vao;
+    GLuint m_skybox_vbo;
+    GLuint m_cubemap_texture;
+
+    // fog parameters
+    bool m_fogEnabled = false;
+    glm::vec4 m_fogColor = glm::vec4(0.9f, 0.45f, 0.3f, 1.0f);
+    float m_fogDensity = 0.12f;
+    float m_fogStart = 3.0f;
+    float m_fogEnd = 10.0f;
+    float m_fogHeight = 0.5f;
+    float m_fogBaseHeight = 0.5f;
+
+    bool m_FXAAEnabled = false;
+
+    void createSkybox();
+    void loadCubeMap(std::vector<std::string> faces);
+    void renderSkybox();
 };

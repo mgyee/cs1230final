@@ -1,0 +1,233 @@
+{
+	"archive" : {},
+	"artifacts" : 
+	[
+		{
+			"path" : "libStaticGLEW.a"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"include_directories"
+		],
+		"files" : 
+		[
+			"CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 59,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 24,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 63,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 64,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-Wno-deprecated-volatile -O3 -DNDEBUG -std=gnu++20 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk -fcolor-diagnostics"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"path" : "/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final"
+				},
+				{
+					"backtrace" : 0,
+					"path" : "/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/StaticGLEW_autogen/include"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/src"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/PRIVATE"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/glew/include"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/entt/single_include"
+				}
+			],
+			"language" : "CXX",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					1
+				],
+				"standard" : "20"
+			},
+			"sourceIndexes" : 
+			[
+				0
+			]
+		},
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-O3 -DNDEBUG -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk -fcolor-diagnostics"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"path" : "/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final"
+				},
+				{
+					"backtrace" : 0,
+					"path" : "/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/StaticGLEW_autogen/include"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/src"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/projects_realtime"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/PRIVATE"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/glew/include"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/Users/aryan_singh/Desktop/Brown Classes/Fall_2024/CS1230/Final/cs1230final/entt/single_include"
+				}
+			],
+			"language" : "C",
+			"sourceIndexes" : 
+			[
+				1
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"id" : "StaticGLEW_autogen_timestamp_deps::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 0,
+			"id" : "StaticGLEW_autogen::@6890427a1f51a3e7e1df"
+		}
+	],
+	"id" : "StaticGLEW::@6890427a1f51a3e7e1df",
+	"name" : "StaticGLEW",
+	"nameOnDisk" : "libStaticGLEW.a",
+	"paths" : 
+	{
+		"build" : ".",
+		"source" : "."
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0,
+				1
+			]
+		},
+		{
+			"name" : "Header Files",
+			"sourceIndexes" : 
+			[
+				2
+			]
+		},
+		{
+			"name" : "",
+			"sourceIndexes" : 
+			[
+				3
+			]
+		},
+		{
+			"name" : "CMake Rules",
+			"sourceIndexes" : 
+			[
+				4
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 0,
+			"compileGroupIndex" : 0,
+			"isGenerated" : true,
+			"path" : "StaticGLEW_autogen/mocs_compilation.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "glew/src/glew.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/stb_image.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "StaticGLEW_autogen/timestamp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "StaticGLEW_autogen/timestamp.rule",
+			"sourceGroupIndex" : 3
+		}
+	],
+	"type" : "STATIC_LIBRARY"
+}
