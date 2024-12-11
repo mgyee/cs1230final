@@ -121,6 +121,7 @@ qt6_add_resources(${PROJECT_NAME} "Resources"
         resources/shaders/default.vert
         resources/shaders/texture.frag
         resources/shaders/texture.vert
+        resources/shaders/skybox.frag resources/shaders/skybox.vert
 )
 
 # GLEW: this provides support for Windows (including 64-bit)

@@ -62,6 +62,8 @@ struct Renderable {
     glm::vec4 cSpecular;
     float shininess;
     glm::mat4 inverseTransposectm;
+    glm::vec4 min;
+    glm::vec4 max;
 };
 
 struct SkyBox {

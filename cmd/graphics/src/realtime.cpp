@@ -818,7 +818,9 @@ void Realtime::updateVBO() {
                                             shape.primitive.material.cDiffuse, 
                                             shape.primitive.material.cSpecular, 
                                             shape.primitive.material.shininess,
-                                            shape.inverseTransposectm};
+                                            shape.inverseTransposectm,
+                                            shape.ctm * glm::vec4(-0.5,-0.5,-0.5,1),
+                                            shape.ctm * glm::vec4(0.5,0.5,0.5,1)};
         registry.emplace<Renderable>(newEntity, newEntityRender);
         index += glShape.length;
     }
@@ -929,6 +931,8 @@ void Realtime::timerEvent(QTimerEvent *event) {
     // Use deltaTime and m_keyMap here to move around
 
     float units = 5.f * deltaTime;
+
+    glm::vec4 oldPos = metaData.cameraData.pos;
     // auto view = registry.view<Position, Velocity>();
 
     if (m_keyMap[Qt::Key_W]) {
@@ -1012,6 +1016,24 @@ void Realtime::timerEvent(QTimerEvent *event) {
     update(); // asks for a PaintGL() call to occur
 
     //update(); // asks for a PaintGL() call to occur
+}
+
+std::pair<bool, bool> Realtime::isCollision(glm::vec4 camMin, glm::vec4 camMax) {
+    auto view = registry.view<Renderable>();
+
+    for (auto entity : view) {
+        const auto& renderable = view.get<Renderable>(entity);
+
+        bool intersectsX = camMax.x > renderable.min.x && camMin.x < renderable.max.x;
+        bool intersectsY = camMax.y > renderable.min.y && camMin.y < renderable.max.y;
+        bool intersectsZ = camMax.z > renderable.min.z && camMin.z < renderable.max.z;
+
+        if (intersectsX && intersectsY && intersectsZ) {
+            bool landing = camMin.y >= renderable.max.y - 1e-1;
+            return std::make_pair(true, landing);
+        }
+    }
+    return std::make_pair(false, false);
 }
 
 // DO NOT EDIT
