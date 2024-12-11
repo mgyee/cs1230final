@@ -151,7 +151,9 @@ private:
     const float m_gravity = -9.8f;
     const float m_jumpSpeed = 5.0f;
     const float m_groundLevel = 1.0f;
-    bool m_isJumping = false;
+    bool m_isJump = false;
+
+    std::pair<bool, bool> isCollision(glm::vec4 camMin, glm::vec4 camMax);
 
     int my_id = -1;
 

@@ -965,26 +965,41 @@ void Realtime::timerEvent(QTimerEvent *event) {
     }
 
 
-    if (m_isJumping) {
+    glm::vec4 temp = metaData.cameraData.pos;
+
+    if (m_isJump) {
         m_verticalVelocity += m_gravity * deltaTime;
-
         metaData.cameraData.pos.y += m_verticalVelocity * deltaTime;
+        // metaData.cameraData.pos.y += m_verticalVelocity * deltaTime;
+    }
 
-        if (metaData.cameraData.pos.y <= m_groundLevel) {
-            metaData.cameraData.pos.y = m_groundLevel;
-            m_verticalVelocity = 0.0f;
-            m_isJumping = false;
+    float move = m_verticalVelocity * deltaTime;
+
+    glm::vec4 camMin = metaData.cameraData.pos - glm::vec4(0.5, 1, 0.5, 0);
+    glm::vec4 camMax = metaData.cameraData.pos + glm::vec4(0.5, 0, 0.5, 0);
+
+    // std::pair<bool, bool> collision = isCollision(camMin, camMax);
+
+    std::pair<bool, bool> collision = isCollision(camMin, camMax);
+
+    if (collision.first) {
+        if (collision.second) {
+            m_verticalVelocity = 0;
+            // metaData.cameraData.pos.y += 1;
+            m_isJump = false;
+            metaData.cameraData.pos = temp;
+        } else {
+            oldPos.y += move;
+            metaData.cameraData.pos = oldPos;
+
         }
+    } else {
+        m_isJump = true;
     }
 
-    if (m_keyMap[Qt::Key_Space] && !m_isJumping) {
-        m_isJumping = true;
+    if (m_keyMap[Qt::Key_Space] && !m_isJump) {
         m_verticalVelocity = m_jumpSpeed;
-        metaData.cameraData.pos += units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
-                                                                glm::vec3(metaData.cameraData.up)), 0));
-    }
-    if (m_keyMap[Qt::Key_Control]) {
-        metaData.cameraData.pos -= units * glm::vec4(0, 1, 0, 0);
+        m_isJump = true;
     }
 
     registry_mutex.lock();
