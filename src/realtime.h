@@ -130,6 +130,12 @@ private:
 
     entt::entity camera_ent;
 
+    float m_verticalVelocity = 0.0f;
+    const float m_gravity = -9.8f;
+    const float m_jumpSpeed = 5.0f;
+    const float m_groundLevel = 1.0f;
+    bool m_isJumping = false;
+
     void updateVBO();
     void paintTexture(GLuint texture, bool pixelFilter, bool kernelFilter);
 
