@@ -8,6 +8,8 @@
 #include <stb_image.h>
 #include "settings.h"
 #include "utils/shaderloader.h"
+#include <thread>
+#include <chrono>
 
 #include <numbers>
 
@@ -28,6 +30,8 @@ Realtime::Realtime(QWidget *parent)
     m_keyMap[Qt::Key_Space]   = false;
 
     // If you must use this function, do not edit anything above this
+    // TCPClient client("127.0.0.1", 50050);
+    // client.connectAndSend("Hello, Server!");
 }
 
 void Realtime::finish() {
@@ -54,6 +58,225 @@ void Realtime::finish() {
     glDeleteProgram(m_skybox_shader);
 
     this->doneCurrent();
+}
+
+uint32_t htonf(float value) {
+    union {
+        float f;
+        uint32_t i;
+    } converter;
+    converter.f = value;
+    return htonl(converter.i);
+}
+
+// Serialize Player struct to network byte order
+void serializePlayer(const Player& player, char* buffer) {
+    // Serialize id (4 bytes)
+    uint32_t networkId = htonl(player.id);
+    memcpy(buffer, &networkId, sizeof(uint32_t));
+
+    // Serialize position (4 * 4 = 16 bytes)
+    uint32_t networkPositionX = htonf(player.position.x);
+    uint32_t networkPositionY = htonf(player.position.y);
+    uint32_t networkPositionZ = htonf(player.position.z);
+    //uint32_t networkPositionW = htonf(player.position.w);
+
+    memcpy(buffer + 4, &networkPositionX, sizeof(uint32_t));
+    memcpy(buffer + 8, &networkPositionY, sizeof(uint32_t));
+    memcpy(buffer + 12, &networkPositionZ, sizeof(uint32_t));
+    //memcpy(buffer + 16, &networkPositionW, sizeof(uint32_t));
+
+    // Serialize velocity (4 * 4 = 16 bytes)
+    uint32_t networkVelocityX = htonf(player.velocity.x);
+    uint32_t networkVelocityY = htonf(player.velocity.y);
+    uint32_t networkVelocityZ = htonf(player.velocity.z);
+    //uint32_t networkVelocityW = htonf(player.velocity.w);
+
+    memcpy(buffer + 16, &networkVelocityX, sizeof(uint32_t));
+    memcpy(buffer + 20, &networkVelocityY, sizeof(uint32_t));
+    memcpy(buffer + 24, &networkVelocityZ, sizeof(uint32_t));
+}
+
+// Deserialize from network byte order back to host byte order
+Player deserializePlayer(const char* buffer) {
+    Player player;
+
+    // Deserialize id
+    uint32_t networkId;
+    memcpy(&networkId, buffer, sizeof(uint32_t));
+    player.id = ntohl(networkId);
+
+    // Deserialize position
+    uint32_t networkPositionX, networkPositionY, networkPositionZ, networkPositionW;
+    memcpy(&networkPositionX, buffer + 4, sizeof(uint32_t));
+    memcpy(&networkPositionY, buffer + 8, sizeof(uint32_t));
+    memcpy(&networkPositionZ, buffer + 12, sizeof(uint32_t));
+
+    union {
+        uint32_t i;
+        float f;
+    } converter;
+
+    converter.i = ntohl(networkPositionX);
+    player.position.x = converter.f;
+
+    converter.i = ntohl(networkPositionY);
+    player.position.y = converter.f;
+
+    converter.i = ntohl(networkPositionZ);
+    player.position.z = converter.f;
+
+    converter.i = ntohl(networkPositionW);
+    player.position.w = 1.f;
+
+    // Deserialize velocity (same process as position)
+    uint32_t networkVelocityX, networkVelocityY, networkVelocityZ, networkVelocityW;
+    memcpy(&networkVelocityX, buffer + 16, sizeof(uint32_t));
+    memcpy(&networkVelocityY, buffer + 20, sizeof(uint32_t));
+    memcpy(&networkVelocityZ, buffer + 24, sizeof(uint32_t));
+
+    converter.i = ntohl(networkVelocityX);
+    player.velocity.x = converter.f;
+
+    converter.i = ntohl(networkVelocityY);
+    player.velocity.y = converter.f;
+
+    converter.i = ntohl(networkVelocityZ);
+    player.velocity.z = converter.f;
+
+    converter.i = ntohl(networkVelocityW);
+    player.velocity.w = 0.f;
+
+    return player;
+}
+
+void Realtime::run_client() {
+    // should connect to the server
+    UDPClient client("127.0.0.1", 12345, 5);
+    char buffer[256] = {0};
+    memset(buffer, 0, 256);
+    int initialValue = -1;
+    memcpy(buffer, &initialValue, sizeof(int));
+    int status;
+    bool success;
+
+
+    success = client.sendMessage(buffer, 4);
+
+    if (!success) {
+        std::cout << "failed to send the connecting message" << std::endl;
+        return;
+    }
+    // maybe no timeout on this one
+    memset(buffer, 0, 256);
+    status = client.readMessage(buffer, 256);
+
+    if (status == -1) {
+        std::cout << "closing because of err in read" << std::endl;
+        return;
+    }
+
+    int value;
+    memcpy(&value, buffer, sizeof(int));
+
+    // this is techincally just for ints, so not sure about this one
+    my_id = ntohl(value);
+    std::cout << "got id: " << my_id << std::endl;
+
+
+    // assuming that there is only one player at this point:
+    auto view = registry.view<Player>();
+    entt::entity myself;
+    for (auto entity : view) {
+        if (view.get<Player>(entity).id == -1) {
+            myself = entity;
+            view.get<Player>(entity).id = my_id;
+            break;
+        }
+    }
+
+    int updates;
+    int total = 0;
+    bool found[4] = {false, false, false, false};
+    while (true) {
+        memset(buffer, 0, 256);
+        // make a message and then marshal
+        // update message
+        registry_mutex.lock();
+        serializePlayer(registry.get<Player>(myself), buffer);
+        success = client.sendMessage(buffer, 28);
+        registry_mutex.unlock();
+        if (!success) {
+            std::cout << "tcp connection has been closed" << std::endl;
+            return;
+        }
+
+        // update stuff; so read, timeout, update
+        // double check status
+        status = client.readMessage(buffer, 256);
+        if (status == -1) {
+            std::cout << "closing because of err in read" << std::endl;
+            //break;
+            return;
+        } else if (status > 0) {
+            // use the world state, take mutex
+            // prep data from the buffer we get
+            updates = status / 28;
+            Player data[updates];
+
+            int offset = 0;
+            for (int i = 0; i < updates; i++) {
+                data[i] = deserializePlayer(buffer + offset);
+                offset += 28;
+            }
+
+            registry_mutex.lock();
+            // update the registry
+            // for every update that we got
+            for (int i = 0; i < updates; i++) {
+                // std::cout << "i value: " << i << std::endl;
+                Player currPlayer = data[i];
+                // don't update yourself
+                if (currPlayer.id == my_id) {
+                    continue;
+                }
+                // curr_id = id from the update
+                //
+                if (!found[currPlayer.id]) {
+                    auto newEntity = registry.create();
+                    registry.emplace<Player>(newEntity, currPlayer);
+                    found[currPlayer.id] = true;
+                    continue;
+                }
+                auto view = registry.view<Player>();
+                for (auto entity : view) {
+                    if (currPlayer.id == view.get<Player>(entity).id) {
+                        // data on the right should be actual updates
+                        // placeholders
+                        auto &entPlayer = view.get<Player>(entity);
+                        entPlayer.position = currPlayer.position;
+                        entPlayer.velocity = currPlayer.velocity;
+                        // std::cout << "Here is the player's id: " << entPlayer.id << std::endl;
+                        // std::cout << "Here is the player's position.x: " << entPlayer.position.x << std::endl;
+                        // std::cout << "Here is the player's position.y: " << entPlayer.position.y << std::endl;
+                        // std::cout << "Here is the player's position.z: " << entPlayer.position.z << std::endl;
+                        break;
+                    }
+                }
+            }
+            registry_mutex.unlock();
+        } else if (status == 0) {
+            // this will just continue because we will base our stuff off
+            // current world state
+            std::cerr << "Got to status 0\n";
+            continue;
+        }
+        //
+    }
+
+    // std::this_thread::sleep_for(std::chrono::seconds(2));
+    // std::cout << "now I am closing" << std::endl;
+    // return;
 }
 
 void Realtime::initializeGL() {
@@ -84,8 +307,8 @@ void Realtime::initializeGL() {
 
     glClearColor(0, 0, 0, 1);
 
-    m_shader = ShaderLoader::createShaderProgram("resources/shaders/default.vert", "resources/shaders/default.frag");
-    m_texture_shader = ShaderLoader::createShaderProgram("resources/shaders/texture.vert", "resources/shaders/texture.frag");
+    m_shader = ShaderLoader::createShaderProgram(":/resources/shaders/default.vert", ":/resources/shaders/default.frag");
+    m_texture_shader = ShaderLoader::createShaderProgram(":/resources/shaders/texture.vert", ":/resources/shaders/texture.frag");
 
     glGenBuffers(1, &m_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
@@ -100,10 +323,6 @@ void Realtime::initializeGL() {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
 
     // creating one entity
-    // auto entity = registry.create();
-    // registry.emplace<Position>(entity, glm::vec3(0.0f, 0.0f, 0.0f));
-    // registry.emplace<Velocity>(entity, glm::vec3(0.0f, 0.0f, 0.0f));
-    // registry.emplace<Renderable>(entity, m_vao, m_shader, 10);
 
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -156,6 +375,15 @@ void Realtime::initializeGL() {
     createSkybox();
     GLenum error = glGetError();
     std::cout << "ERROR AFTER initializing " << error << "\n";
+
+    camera_ent = registry.create();
+    Player myself = {-1, metaData.cameraData.pos, glm::vec4(0.0)};
+    registry.emplace<Player>(camera_ent, myself);
+
+    // need to bind this instance of realtime for the thread
+    std::thread myThread(std::bind(&Realtime::run_client, this));
+    myThread.detach();
+
     // paintGL();
 }
 
@@ -492,6 +720,9 @@ void Realtime::sceneChanged() {
     m_camera.setHeightAngle(metaData.cameraData.heightAngle);
     m_camera.setViewMatrix(metaData.cameraData.pos, metaData.cameraData.look, metaData.cameraData.up);
     m_camera.setProjMatrix(settings.nearPlane, settings.farPlane);
+    registry_mutex.lock();
+    registry.get<Player>(camera_ent).position = metaData.cameraData.pos;
+    registry_mutex.unlock();
     updateVBO();
     glUseProgram(m_shader);
     int i = 0;
@@ -540,10 +771,17 @@ void Realtime::updateVBO() {
     if ((int)m_vbo < 0) {
         return;
     }
+
+    // DEBUG: IF NOTHING SHOWS AFTER
+    // if (my_id != -1) {
+    //     return;
+    // }
     std::vector<float> shapeData;
     unsigned long index = 0;
     glShapes.clear();
-    registry.clear();
+    registry_mutex.lock();
+    // handle camera as a special case?
+    registry.clear<Renderable>();
 
     for(auto &shape: metaData.shapes) {
         std::vector<float> tempData;
@@ -564,7 +802,7 @@ void Realtime::updateVBO() {
         case PrimitiveType::PRIMITIVE_MESH:
             break;
         }
-        glShape glShape = {shape, index, tempData.size() / 6};
+        glShape glShape = {shape, index, static_cast<unsigned long>(tempData.size() / 6)};
         glShapes.push_back(glShape);
 
         shapeData.insert(shapeData.end(), tempData.begin(), tempData.end());
@@ -573,18 +811,18 @@ void Realtime::updateVBO() {
         auto newEntity = registry.create();
         // registry.emplace<Position>(newEntity, shape.primitive.transform.position);
         // registry.emplace<Velocity>(newEntity, shape.primitive.transform.velocity);
-
-        Renderable newEntityRender = {index, tempData.size() / 6,
-                                      shape.ctm,
-                                      shape.primitive.material.cAmbient,
-                                      shape.primitive.material.cDiffuse,
-                                      shape.primitive.material.cSpecular,
-                                      shape.primitive.material.shininess,
-                                      shape.inverseTransposectm};
+        
+        Renderable newEntityRender = {index, static_cast<unsigned long>(tempData.size() / 6),
+                                            shape.ctm, 
+                                            shape.primitive.material.cAmbient, 
+                                            shape.primitive.material.cDiffuse, 
+                                            shape.primitive.material.cSpecular, 
+                                            shape.primitive.material.shininess,
+                                            shape.inverseTransposectm};
         registry.emplace<Renderable>(newEntity, newEntityRender);
         index += glShape.length;
     }
-
+    registry_mutex.unlock();
 
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
     glBufferData(GL_ARRAY_BUFFER, shapeData.size() * sizeof(GLfloat), shapeData.data(), GL_STATIC_DRAW);
@@ -649,7 +887,8 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
             float one_minus_c_x = 1.f - c_x;
 
             glm::vec3 u_y = -glm::normalize(glm::cross(glm::vec3(metaData.cameraData.look),
-                                                                glm::vec3(metaData.cameraData.up)));
+                                                       glm::vec3(metaData.cameraData.up)));
+
             float y_angle = deltaY * std::numbers::pi / 500.f;
             float c_y = glm::cos(y_angle);
             float s_y = glm::sin(y_angle);
@@ -690,7 +929,6 @@ void Realtime::timerEvent(QTimerEvent *event) {
     // Use deltaTime and m_keyMap here to move around
 
     float units = 5.f * deltaTime;
-    
     // auto view = registry.view<Position, Velocity>();
 
     if (m_keyMap[Qt::Key_W]) {
@@ -705,7 +943,7 @@ void Realtime::timerEvent(QTimerEvent *event) {
         // pos.value -= units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
         //                                               glm::vec3(metaData.cameraData.up)), 0));
         glm::vec4 move = units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
-                                                        glm::vec3(metaData.cameraData.up)), 0));
+                                                                     glm::vec3(metaData.cameraData.up)), 0));
         move.y = 0;
         metaData.cameraData.pos -= move;
     }
@@ -725,24 +963,7 @@ void Realtime::timerEvent(QTimerEvent *event) {
         move.y = 0;
         metaData.cameraData.pos += move;
     }
-    // if (m_keyMap[Qt::Key_Control]) {
-    //     // metaData.cameraData.pos -= units * glm::vec4(0, 1, 0, 0);
-    // }
-    // if (m_keyMap[Qt::Key_Space]) {
-    //     auto &pos = view.get<Position>(camera_ent);
-    //     auto &vel = view.get<Velocity>(camera_ent);
-    //     if (pos.value.y == 0) {
-    //         vel.value = glm::vec4(0, 5, 0, 0);
-    //     }
-    //     pos.value += deltaTime * vel.value;
-    //     vel.value -= deltaTime * 2;
 
-    //     if (pos.value.y <= 0) {
-    //         pos.value.y = 0;
-    //         vel.value = glm::vec4(0);
-    //     }
-    //     // metaData.cameraData.pos += units * glm::vec4(0, 1, 0, 0);
-    // }
 
     if (m_isJumping) {
         m_verticalVelocity += m_gravity * deltaTime;
@@ -759,7 +980,6 @@ void Realtime::timerEvent(QTimerEvent *event) {
     if (m_keyMap[Qt::Key_Space] && !m_isJumping) {
         m_isJumping = true;
         m_verticalVelocity = m_jumpSpeed;
-        //                                                          glm::vec3(metaData.cameraData.up)), 0));
         metaData.cameraData.pos += units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
                                                                 glm::vec3(metaData.cameraData.up)), 0));
     }
@@ -767,9 +987,16 @@ void Realtime::timerEvent(QTimerEvent *event) {
         metaData.cameraData.pos -= units * glm::vec4(0, 1, 0, 0);
     }
 
+    registry_mutex.lock();
+    registry.get<Player>(camera_ent).position = metaData.cameraData.pos;
+    registry_mutex.unlock();
+    // velocity can probably be taken from move
+    // orientation vector????
     m_camera.setViewMatrix(metaData.cameraData.pos, metaData.cameraData.look, metaData.cameraData.up);
 
     update(); // asks for a PaintGL() call to occur
+
+    //update(); // asks for a PaintGL() call to occur
 }
 
 // DO NOT EDIT

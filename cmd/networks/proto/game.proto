@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package userservice;
+
+option go_package = "generated/proto;proto";
+
+// Define the service
+service UserService {
+  // RPC method definitions
+  rpc RegisterPlayer(RegisterPlayerRequest) returns (RegisterPlayerResponse) {}
+  rpc GetGameState(GetGameStateRequest) returns (GetGameStateResponse) {}
+}
+
+message Player {
+  int32 player_id = 1;
+  float pos_x = 2;
+  float pos_y = 3;
+  float pos_z = 4;
+  float vel_x = 5;
+  float vel_y = 6;
+  float vel_z = 7;
+}
+
+message RegisterPlayerRequest {}
+
+message RegisterPlayerResponse {
+  int32 player_id = 1;
+}
+
+message GetGameStateRequest {
+  Player player = 1;
+}
+
+message GetGameStateResponse {
+  GameState gameState = 1;
+}
+
+message GameState {
+  repeated Player players = 1;
+}
