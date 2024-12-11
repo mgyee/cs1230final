@@ -25,39 +25,6 @@
     {
       "groups": [
         {
-          "translate": [-0.65, 0.0, 0.65],
-          "primitives": [
-            {
-              "type": "cylinder",
-              "diffuse": [0.8, 0.6, 0.6],
-              "specular": [1.0, 1.0, 1.0],
-              "shininess": 15.0
-            }
-          ]
-        },
-        {
-          "translate": [-0.65, 0.0, -0.65],
-          "primitives": [
-            {
-              "type": "cone",
-              "diffuse": [0.6, 0.6, 0.8],
-              "specular": [1.0, 1.0, 1.0],
-              "shininess": 15.0
-            }
-          ]
-        },
-        {
-          "translate": [0.65, 0.0, -0.65],
-          "primitives": [
-            {
-              "type": "sphere",
-              "diffuse": [0.6, 0.8, 0.6],
-              "specular": [1.0, 1.0, 1.0],
-              "shininess": 15.0
-            }
-          ]
-        },
-        {
           "translate": [0.65, 0.0, 0.65],
           "primitives": [
             {
@@ -69,8 +36,8 @@
           ]
         },
         {
-          "translate": [0.0, -1.6, 0.0],
-          "scale": [10.0, 2, 10.0],
+          "translate": [0.0, -1, 0.0],
+          "scale": [20.0, 2, 20.0],
           "primitives": [
             {
               "type": "cube",

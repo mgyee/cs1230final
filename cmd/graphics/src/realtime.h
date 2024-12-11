@@ -26,6 +26,7 @@
 #include "udpclientwin.h"
 #include "udpclientarm.h"
 #include <mutex>
+#include <thread>
 
 struct glShape {
     RenderShapeData shape;
@@ -161,12 +162,14 @@ private:
     float m_verticalVelocity = 0.0f;
     const float m_gravity = -9.8f;
     const float m_jumpSpeed = 5.0f;
-    const float m_groundLevel = 1.0f;
+    const float m_groundLevel = 1.5f;
     bool m_isJump = false;
 
     std::pair<bool, bool> isCollision(glm::vec4 camMin, glm::vec4 camMax);
 
     int my_id = -1;
+
+    std::thread m_thread;
 
 //TCPClient client;
 
@@ -193,9 +196,13 @@ private:
 
     bool thread_started = false;
 
+    bool terminate = false;
+
     Renderable playerDefault = {};
 
     void createSkybox();
     void loadCubeMap(std::vector<std::string> faces);
     void renderSkybox();
+
+    bool attack = false;
 };
