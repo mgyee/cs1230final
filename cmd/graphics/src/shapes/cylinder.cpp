@@ -17,17 +17,29 @@ void Cylinder::makeTile(glm::vec3 topLeft,
 
     insertVec3(m_vertexData, topLeft);
     insertVec3(m_vertexData, glm::normalize(glm::vec3(topLeft.x, 0, topLeft.z)));
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
     insertVec3(m_vertexData, bottomLeft);
     insertVec3(m_vertexData, glm::normalize(glm::vec3(bottomLeft.x, 0, bottomLeft.z)));
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
     insertVec3(m_vertexData, bottomRight);
     insertVec3(m_vertexData, glm::normalize(glm::vec3(bottomRight.x, 0, bottomRight.z)));
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
 
     insertVec3(m_vertexData, bottomRight);
     insertVec3(m_vertexData, glm::normalize(glm::vec3(bottomRight.x, 0, bottomRight.z)));
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
     insertVec3(m_vertexData, topRight);
     insertVec3(m_vertexData, glm::normalize(glm::vec3(topRight.x, 0, topRight.z)));
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
     insertVec3(m_vertexData, topLeft);
     insertVec3(m_vertexData, glm::normalize(glm::vec3(topLeft.x, 0, topLeft.z)));
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
 }
 
 void Cylinder::makeCapTile(glm::vec3 topLeft,
@@ -37,17 +49,29 @@ void Cylinder::makeCapTile(glm::vec3 topLeft,
                            glm::vec3 normal) {
     insertVec3(m_vertexData, topLeft);
     insertVec3(m_vertexData, normal);
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
     insertVec3(m_vertexData, bottomLeft);
     insertVec3(m_vertexData, normal);
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
     insertVec3(m_vertexData, bottomRight);
     insertVec3(m_vertexData, normal);
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
 
     insertVec3(m_vertexData, bottomRight);
     insertVec3(m_vertexData, normal);
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
     insertVec3(m_vertexData, topRight);
     insertVec3(m_vertexData, normal);
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
     insertVec3(m_vertexData, topLeft);
     insertVec3(m_vertexData, normal);
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
 }
 
 void Cylinder::makeWedge(float currentTheta, float nextTheta) {

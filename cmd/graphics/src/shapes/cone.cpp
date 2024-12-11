@@ -29,17 +29,29 @@ void Cone::makeTile(glm::vec3 topLeft,
 
     insertVec3(m_vertexData, topLeft);
     insertVec3(m_vertexData, topLeftNormal);
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
     insertVec3(m_vertexData, bottomLeft);
     insertVec3(m_vertexData, botLeftNormal);
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
     insertVec3(m_vertexData, bottomRight);
     insertVec3(m_vertexData, botRightNormal);
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
 
     insertVec3(m_vertexData, bottomRight);
     insertVec3(m_vertexData, botRightNormal);
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
     insertVec3(m_vertexData, topRight);
     insertVec3(m_vertexData, topRightNormal);
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
     insertVec3(m_vertexData, topLeft);
     insertVec3(m_vertexData, topLeftNormal);
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
 }
 
 void Cone::makeCapTile(glm::vec3 topLeft,
@@ -48,17 +60,29 @@ void Cone::makeCapTile(glm::vec3 topLeft,
                        glm::vec3 bottomRight) {
     insertVec3(m_vertexData, topLeft);
     insertVec3(m_vertexData, glm::vec3(0, -1, 0));
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
     insertVec3(m_vertexData, bottomLeft);
     insertVec3(m_vertexData, glm::vec3(0, -1, 0));
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
     insertVec3(m_vertexData, bottomRight);
     insertVec3(m_vertexData, glm::vec3(0, -1, 0));
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
 
     insertVec3(m_vertexData, bottomRight);
     insertVec3(m_vertexData, glm::vec3(0, -1, 0));
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
     insertVec3(m_vertexData, topRight);
     insertVec3(m_vertexData, glm::vec3(0, -1, 0));
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
     insertVec3(m_vertexData, topLeft);
     insertVec3(m_vertexData, glm::vec3(0, -1, 0));
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
 }
 
 void Cone::makeWedge(float currentTheta, float nextTheta) {

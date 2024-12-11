@@ -136,6 +136,15 @@ private:
     GLuint m_defaultFBO;
     GLuint m_texture_shader;
 
+    GLuint m_daniel_id;
+    QImage m_danielImage;
+
+    GLuint m_gavin_id;
+    QImage m_gavinImage;
+
+    GLuint m_evan_id;
+    QImage m_evanImage;
+
     float m_screen_width;
     float m_screen_height;
 

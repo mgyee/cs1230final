@@ -6,6 +6,47 @@ void Cube::updateParams(int param1) {
     setVertexData();
 }
 
+glm::vec2 planeUV(glm::vec3 normal, glm::vec3 position) {
+    // left, [1][0]
+    if (normal.x == 1.f) {
+        return glm::vec2(-position.z + 0.5f, position.y + 0.5f);
+    }
+
+    // right [0][1]
+    else if (normal.x == -1.f) {
+        return glm::vec2(position.z + 0.5f, position.y + 0.5f);
+    }
+
+    // top [1][1]
+    else if (normal.y == 1.f && normal.x == 0.f and normal.z == 0.f) {
+        return glm::vec2(position.x + 0.5f, -position.z + 0.5f);
+        //return glm::vec2(0.f, 0.f);
+    }
+
+    // bottom [1][2]
+    else if (normal.y == -1.f) {
+        return glm::vec2(position.x + 0.5f, position.z + 0.5f);
+    }
+
+    // front [0][0]
+    else if (normal.z == 1.f) {
+        return glm::vec2(position.x + 0.5f, position.y + 0.5f);
+    }
+
+    // back [0][2]
+    else if (normal.z == -1.f) {
+        return glm::vec2(-position.x + 0.5f, position.y + 0.5f);
+    }
+
+    return glm::vec2(-1.f, -1.f);
+}
+
+void insertVec2(std::vector<float> &data, glm::vec2 v) {
+    data.push_back(v.x);
+    data.push_back(v.y);
+}
+
+
 void Cube::makeTile(glm::vec3 topLeft,
                     glm::vec3 topRight,
                     glm::vec3 bottomLeft,
@@ -14,17 +55,23 @@ void Cube::makeTile(glm::vec3 topLeft,
     glm::vec3 normal = glm::normalize(glm::cross(bottomLeft - topLeft, bottomRight - bottomLeft));
     insertVec3(m_vertexData, topLeft);
     insertVec3(m_vertexData, normal);
+    insertVec2(m_vertexData, planeUV(normal, topLeft));
     insertVec3(m_vertexData, bottomLeft);
     insertVec3(m_vertexData, normal);
+    insertVec2(m_vertexData, planeUV(normal, bottomLeft));
     insertVec3(m_vertexData, bottomRight);
     insertVec3(m_vertexData, normal);
+    insertVec2(m_vertexData, planeUV(normal, bottomRight));
 
     insertVec3(m_vertexData, bottomRight);
     insertVec3(m_vertexData, normal);
+    insertVec2(m_vertexData, planeUV(normal, bottomRight));
     insertVec3(m_vertexData, topRight);
     insertVec3(m_vertexData, normal);
+    insertVec2(m_vertexData, planeUV(normal, topRight));
     insertVec3(m_vertexData, topLeft);
     insertVec3(m_vertexData, normal);
+    insertVec2(m_vertexData, planeUV(normal, topLeft));
 }
 
 void Cube::makeFace(glm::vec3 topLeft,
