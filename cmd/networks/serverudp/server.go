@@ -143,7 +143,7 @@ func main() {
 	gameInfoMutex = &sync.Mutex{}
 	idMutex = &sync.Mutex{}
 	// Create a listener on TCP port
-	serverAddr := "127.0.0.1:12345"
+	serverAddr := "0.0.0.0:12345"
 
 	// Resolve the UDP address
 	udpAddr, err := net.ResolveUDPAddr("udp", serverAddr)

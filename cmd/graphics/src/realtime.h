@@ -83,6 +83,7 @@ public:
     void settingsChanged();
     void saveViewportImage(std::string filePath);
 
+    std::string ip;
 
 
 public slots:

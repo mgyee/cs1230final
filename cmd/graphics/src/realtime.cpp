@@ -166,7 +166,8 @@ static bool areFloatsEqual(float a, float b, float epsilon = 1e-5f) {
 
 void Realtime::run_client() {
     // should connect to the server
-    UDPClient client("127.0.0.1", 12345, 5);
+    UDPClient client(ip, 12345, 5);
+    std::cout << ip << std::endl;
     char buffer[256] = {0};
     memset(buffer, 0, 256);
     int initialValue = -1;
