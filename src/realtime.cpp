@@ -751,11 +751,15 @@ void Realtime::timerEvent(QTimerEvent *event) {
     //     // metaData.cameraData.pos += units * glm::vec4(0, 1, 0, 0);
     // }
 
+    glm::vec4 temp = metaData.cameraData.pos;
+
     if (m_isJump) {
         m_verticalVelocity += m_gravity * deltaTime;
         metaData.cameraData.pos.y += m_verticalVelocity * deltaTime;
         // metaData.cameraData.pos.y += m_verticalVelocity * deltaTime;
     }
+
+    float move = m_verticalVelocity * deltaTime;
 
     glm::vec4 camMin = metaData.cameraData.pos - glm::vec4(0.5, 1, 0.5, 0);
     glm::vec4 camMax = metaData.cameraData.pos + glm::vec4(0.5, 0, 0.5, 0);
@@ -768,21 +772,25 @@ void Realtime::timerEvent(QTimerEvent *event) {
         if (collision.second) {
             m_verticalVelocity = 0;
             // metaData.cameraData.pos.y += 1;
-            m_jumpCount = 2;
             m_isJump = false;
+            metaData.cameraData.pos = temp;
+        } else {
+            oldPos.y += move;
+            metaData.cameraData.pos = oldPos;
+
         }
-        metaData.cameraData.pos = oldPos;
+    } else {
+        m_isJump = true;
     }
 
-    if (m_keyMap[Qt::Key_Space] && m_jumpCount > 0 && !m_isJump) {
-        m_jumpCount--;
+    if (m_keyMap[Qt::Key_Space] && !m_isJump) {
         m_verticalVelocity = m_jumpSpeed;
         m_isJump = true;
     }
 
-    if (m_keyMap[Qt::Key_Control]) {
-        metaData.cameraData.pos -= units * glm::vec4(0, 1, 0, 0);
-    }
+    // if (m_keyMap[Qt::Key_Control]) {
+    //     metaData.cameraData.pos -= units * glm::vec4(0, 1, 0, 0);
+    // }
 
     // if (metaData.cameraData.pos.y < m_groundLevel) {
     //     metaData.cameraData.pos.y = m_groundLevel;
