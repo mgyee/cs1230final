@@ -76,18 +76,20 @@ void main() {
     vec3 V = normalize(vec3(camPos) - worldPos);
     vec3 position = worldPos;
 
+    bool isUsingATexture = false;
+    vec4 to_add = vec4(0.0f);
     if (isUsingDaniel) {
         vec4 danielTexture = texture(danielSampler, outUV);
-        fragColor = danielTexture;
-        return;
+        to_add = danielTexture;
+        isUsingATexture = true;
     } else if (isUsingEvan) {
         vec4 evanTexture = texture(evanSampler, outUV);
-        fragColor = evanTexture;
-        return;
+        to_add = evanTexture;
+        isUsingATexture = true;
     } else if (isUsingGavin) {
         vec4 gavinTexture = texture(gavinSampler, outUV);
-        fragColor = gavinTexture;
-        return;
+        to_add = gavinTexture;
+        isUsingATexture = true;
     }
 
     for (int i = 0; i < lightsCount; i++) {
@@ -134,7 +136,12 @@ void main() {
             specular_closeness = pow(specular_closeness, shininess);
         }
 
-        fragColor += f * I * (diffuse * diffuse_closeness + specular * specular_closeness);
+        if (isUsingATexture) {
+            fragColor += f * I * (diffuse * diffuse_closeness + specular * specular_closeness) * to_add;
+        } else {
+            fragColor += f * I * (diffuse * diffuse_closeness + specular * specular_closeness);
+        }
+
 
 
         if (fog) {
