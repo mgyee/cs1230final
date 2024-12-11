@@ -760,15 +760,18 @@ void Realtime::timerEvent(QTimerEvent *event) {
     glm::vec4 camMin = metaData.cameraData.pos - glm::vec4(0.5, 1, 0.5, 0);
     glm::vec4 camMax = metaData.cameraData.pos + glm::vec4(0.5, 0, 0.5, 0);
 
+    // std::pair<bool, bool> collision = isCollision(camMin, camMax);
+
     std::pair<bool, bool> collision = isCollision(camMin, camMax);
 
     if (collision.first) {
-        metaData.cameraData.pos = oldPos;
         if (collision.second) {
+            m_verticalVelocity = 0;
+            // metaData.cameraData.pos.y += 1;
             m_jumpCount = 2;
             m_isJump = false;
-            m_verticalVelocity = 0;
         }
+        metaData.cameraData.pos = oldPos;
     }
 
     if (m_keyMap[Qt::Key_Space] && m_jumpCount > 0 && !m_isJump) {
@@ -799,9 +802,9 @@ std::pair<bool, bool> Realtime::isCollision(glm::vec4 camMin, glm::vec4 camMax) 
     for (auto entity : view) {
         const auto& renderable = view.get<Renderable>(entity);
 
-        bool intersectsX = camMax.x > renderable.min.x && camMax.x < renderable.max.x;
-        bool intersectsY = camMax.y > renderable.min.y && camMax.y < renderable.max.y;
-        bool intersectsZ = camMax.z > renderable.min.z && camMax.z < renderable.max.z;
+        bool intersectsX = camMax.x > renderable.min.x && camMin.x < renderable.max.x;
+        bool intersectsY = camMax.y > renderable.min.y && camMin.y < renderable.max.y;
+        bool intersectsZ = camMax.z > renderable.min.z && camMin.z < renderable.max.z;
 
         if (intersectsX && intersectsY && intersectsZ) {
             bool landing = camMin.y >= renderable.max.y - 1e-1;
