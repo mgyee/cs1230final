@@ -182,6 +182,10 @@ private:
 
     bool m_FXAAEnabled = false;
 
+    bool thread_started = false;
+
+    Renderable playerDefault = {};
+
     void createSkybox();
     void loadCubeMap(std::vector<std::string> faces);
     void renderSkybox();

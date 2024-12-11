@@ -1,5 +1,6 @@
 #include "realtime.h"
 
+#include <glm/gtc/matrix_transform.hpp>
 #include <QCoreApplication>
 #include <QMouseEvent>
 #include <QKeyEvent>
@@ -244,7 +245,18 @@ void Realtime::run_client() {
                 //
                 if (!found[currPlayer.id]) {
                     auto newEntity = registry.create();
+                    // Create the new player
                     registry.emplace<Player>(newEntity, currPlayer);
+
+                    Renderable thisRenderable = playerDefault;
+                    glm::vec3 cubeOffset = glm::vec3(0.0f, 0.0f, 0.2f);
+                    glm::vec3 cubeScale = glm::vec3(0.1f, 0.1f, 0.1f);
+                    glm::mat4 cubeCTM = glm::translate(glm::mat4(1.0f), glm::vec3(currPlayer.position) + cubeOffset);
+                    cubeCTM = glm::scale(cubeCTM, cubeScale);
+                    registry.emplace<Renderable>(newEntity, thisRenderable);
+                    registry.get<Renderable>(newEntity).ctm = cubeCTM;
+                    registry.get<Renderable>(newEntity).inverseTransposectm = glm::inverse(glm::transpose(cubeCTM));
+
                     found[currPlayer.id] = true;
                     continue;
                 }
@@ -256,10 +268,13 @@ void Realtime::run_client() {
                         auto &entPlayer = view.get<Player>(entity);
                         entPlayer.position = currPlayer.position;
                         entPlayer.velocity = currPlayer.velocity;
-                        // std::cout << "Here is the player's id: " << entPlayer.id << std::endl;
-                        // std::cout << "Here is the player's position.x: " << entPlayer.position.x << std::endl;
-                        // std::cout << "Here is the player's position.y: " << entPlayer.position.y << std::endl;
-                        // std::cout << "Here is the player's position.z: " << entPlayer.position.z << std::endl;
+
+                        glm::vec3 cubeOffset = glm::vec3(0.0f, 0.0f, 0.2f);
+                        glm::vec3 cubeScale = glm::vec3(0.1f, 0.1f, 0.1f);
+                        glm::mat4 cubeCTM = glm::translate(glm::mat4(1.0f), glm::vec3(entPlayer.position) + cubeOffset);
+                        cubeCTM = glm::scale(cubeCTM, cubeScale);
+                        registry.get<Renderable>(entity).ctm = cubeCTM;
+                        registry.get<Renderable>(entity).inverseTransposectm = glm::inverse(glm::transpose(cubeCTM));
                         break;
                     }
                 }
@@ -379,10 +394,11 @@ void Realtime::initializeGL() {
     camera_ent = registry.create();
     Player myself = {-1, metaData.cameraData.pos, glm::vec4(0.0)};
     registry.emplace<Player>(camera_ent, myself);
+    registry.emplace<Renderable>(camera_ent, playerDefault);
 
     // need to bind this instance of realtime for the thread
-    std::thread myThread(std::bind(&Realtime::run_client, this));
-    myThread.detach();
+    // std::thread myThread(std::bind(&Realtime::run_client, this));
+    // myThread.detach();
 
     // paintGL();
 }
@@ -578,6 +594,7 @@ void Realtime::paintGL() {
 
     glUniform4fv(glGetUniformLocation(m_shader, "camPos"), 1, &camPos[0]);
 
+    registry_mutex.lock();
     auto view = registry.view<Renderable>();
     for (auto entity : view) {
         // const auto &pos = view.get<Position>(entity);
@@ -604,6 +621,35 @@ void Realtime::paintGL() {
 
         glDrawArrays(GL_TRIANGLES, renderable.index, renderable.vertexCount);
     }
+    registry_mutex.unlock();
+
+    // auto newView = registry.view<Renderable, Player>();
+
+    //  for (auto entity : newView) {
+    //     // const auto &pos = view.get<Position>(entity);
+    //     const auto &renderable = newView.get<Renderable>(entity);
+
+    //     glm::mat4 mvpMat = m_camera.getProjMatrix() * glm::mat4(1.0) * renderable.ctm;
+
+    //     glUniformMatrix4fv(glGetUniformLocation(m_shader, "mvpMat"), 1, GL_FALSE, &mvpMat[0][0]);
+    //     glUniformMatrix4fv(glGetUniformLocation(m_shader, "modelMat"), 1, GL_FALSE, &renderable.ctm[0][0]);
+    //     glUniformMatrix4fv(glGetUniformLocation(m_shader, "invTransModelMat"), 1, GL_FALSE,
+    //                        &renderable.inverseTransposectm[0][0]);
+    //     glUniformMatrix4fv(glGetUniformLocation(m_shader, "viewMat"), 1, GL_FALSE, &glm::mat4(1.0)[0][0]);
+
+    //     glm::vec4 ambient = metaData.globalData.ka * renderable.cAmbient;
+    //     glUniform4fv(glGetUniformLocation(m_shader, "ambient"), 1, &ambient[0]);
+
+    //     glm::vec4 diffuse = metaData.globalData.kd * renderable.cDiffuse;
+    //     glUniform4fv(glGetUniformLocation(m_shader, "diffuse"), 1, &diffuse[0]);
+
+    //     glm::vec4 specular = metaData.globalData.ks * renderable.cSpecular;
+    //     glUniform4fv(glGetUniformLocation(m_shader, "specular"), 1, &specular[0]);
+
+    //     glUniform1f(glGetUniformLocation(m_shader, "shininess"), renderable.shininess);
+
+    //     glDrawArrays(GL_TRIANGLES, renderable.index, renderable.vertexCount);
+    // }
 
     glBindVertexArray(0);
 
@@ -765,6 +811,13 @@ void Realtime::sceneChanged() {
     }
     glUniform1i(glGetUniformLocation(m_shader, "lightsCount"), i);
     glUseProgram(0);
+
+    if (!thread_started) {
+        thread_started = true;
+        std::thread myThread(std::bind(&Realtime::run_client, this));
+        myThread.detach();
+    }
+    std::cout << "got to the end of scene change" << std::endl;
     update(); // asks for a PaintGL() call to occur
 }
 
@@ -783,7 +836,8 @@ void Realtime::updateVBO() {
     registry_mutex.lock();
     // handle camera as a special case?
     registry.clear<Renderable>();
-
+    bool cubeFound = false;
+    int count = 0;
     for(auto &shape: metaData.shapes) {
         std::vector<float> tempData;
 
@@ -799,6 +853,7 @@ void Realtime::updateVBO() {
             break;
         case PrimitiveType::PRIMITIVE_CUBE:
             tempData = cube.generateShape();
+            cubeFound = true;
             break;
         case PrimitiveType::PRIMITIVE_MESH:
             break;
@@ -824,6 +879,24 @@ void Realtime::updateVBO() {
                                             shape.ctm * glm::vec4(0.5,0.5,0.5,1)};
         registry.emplace<Renderable>(newEntity, newEntityRender);
         index += glShape.length;
+
+        if (cubeFound && count == 0) {
+            count += 1;
+            glm::mat4 positionCtm = glm::mat4(1.0);
+            // when you make a new player, just set the [3] to their position
+            positionCtm[3] = metaData.cameraData.pos + 2.0f;
+            playerDefault = {index, static_cast<unsigned long>(tempData.size() / 6),
+                                            positionCtm, 
+                                            shape.primitive.material.cAmbient, 
+                                            shape.primitive.material.cDiffuse, 
+                                            shape.primitive.material.cSpecular, 
+                                            shape.primitive.material.shininess,
+                                            glm::transpose(glm::inverse(positionCtm)),
+                                            shape.ctm * glm::vec4(-0.5,-0.5,-0.5,1),
+                                            shape.ctm * glm::vec4(0.5,0.5,0.5,1)};
+            registry.emplace<Renderable>(camera_ent, playerDefault);
+            // index += glShape.length;
+        }
     }
     registry_mutex.unlock();
 
@@ -1009,6 +1082,12 @@ void Realtime::timerEvent(QTimerEvent *event) {
 
     registry_mutex.lock();
     registry.get<Player>(camera_ent).position = metaData.cameraData.pos;
+    glm::vec3 cubeOffset = glm::vec3(0.0f, 0.0f, 0.2f); // Example: 1 unit in front of camera
+    glm::vec3 cubeScale = glm::vec3(0.1f, 0.1f, 0.1f);
+    glm::mat4 cubeCTM = glm::translate(glm::mat4(1.0f), glm::vec3(metaData.cameraData.pos) + cubeOffset);
+    cubeCTM = glm::scale(cubeCTM, cubeScale);
+    registry.get<Renderable>(camera_ent).ctm = cubeCTM;
+    registry.get<Renderable>(camera_ent).inverseTransposectm = glm::inverse(glm::transpose(cubeCTM));
     registry_mutex.unlock();
     // velocity can probably be taken from move
     // orientation vector????
