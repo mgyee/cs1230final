@@ -4,6 +4,8 @@
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <iostream>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 #include "settings.h"
 #include "utils/shaderloader.h"
 
@@ -45,6 +47,11 @@ void Realtime::finish() {
 
     glDeleteRenderbuffers(1, &m_fbo_renderbuffer);
     glDeleteFramebuffers(1, &m_fbo);
+
+    glDeleteVertexArrays(1, &m_skybox_vao);
+    glDeleteBuffers(1, &m_skybox_vbo);
+    glDeleteTextures(1, &m_cubemap_texture);
+    glDeleteProgram(m_skybox_shader);
 
     this->doneCurrent();
 }
@@ -145,8 +152,134 @@ void Realtime::initializeGL() {
     glBindVertexArray(0);
 
     makeFBO();
+
+    createSkybox();
+    GLenum error = glGetError();
+    std::cout << "ERROR AFTER initializing " << error << "\n";
+    // paintGL();
 }
 
+void Realtime::createSkybox() {
+    GLenum error3 = glGetError();
+    // std::cout << "ERROR at start of create Skybox " << error3 << "\n";
+    m_skybox_shader = ShaderLoader::createShaderProgram("resources/shaders/skybox.vert", "resources/shaders/skybox.frag");
+
+    std::vector<GLfloat> skyboxVertices = {
+        // positions
+        -1.0f,  1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+        -1.0f,  1.0f, -1.0f,
+        1.0f,  1.0f, -1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+        1.0f, -1.0f,  1.0f
+    };
+
+    GLenum error4 = glGetError();
+    // std::cout << "ERROR after creating positions " << error4 << "\n";
+
+    glGenVertexArrays(1, &m_skybox_vao);
+    glGenBuffers(1, &m_skybox_vbo);
+
+    GLenum error2 = glGetError();
+    // std::cout << "ERROR after gen arrays and buffers " << error2 << "\n";
+
+    glBindVertexArray(m_skybox_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, m_skybox_vbo);
+    glBufferData(GL_ARRAY_BUFFER, skyboxVertices.size() * sizeof(GLfloat), skyboxVertices.data(), GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
+
+    // glEnableVertexAttribArray(1);
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), reinterpret_cast<void*>(3 * sizeof(GLfloat)));
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    std::vector<std::string> faces = {
+        "resources/skybox/right.jpg",
+        "resources/skybox/left.jpg",
+        "resources/skybox/top.jpg",
+        "resources/skybox/bottom.jpg",
+        "resources/skybox/front.jpg",
+        "resources/skybox/back.jpg"
+    };
+    GLenum error = glGetError();
+    std::cout << "ERROR before loading cube map " << error << "\n";
+    loadCubeMap(faces);
+}
+
+void Realtime::loadCubeMap(std::vector<std::string> faces) {
+    glUseProgram(m_skybox_shader);
+    glActiveTexture(GL_TEXTURE2);
+    glGenTextures(1, &m_cubemap_texture);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, m_cubemap_texture);
+
+    int width, height, nrChannels;
+    for (unsigned int i = 0; i < faces.size(); i++)
+    {
+        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                         0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+                         );
+            stbi_image_free(data);
+            // std::cout << "Succesfully loaded image" << std::endl; // this works
+        }
+        else
+        {
+            std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    // glBindTexture(GL_TEXTURE_CUBE_MAP, 2);
+    glUseProgram(0);
+    GLenum error = glGetError();
+    std::cout << "ERROR after loading cube map " << error << "\n";
+}
 void Realtime::makeFBO(){
     // Task 19: Generate and bind an empty texture, set its min/mag filter interpolation, then unbind
 
@@ -199,9 +332,19 @@ void Realtime::paintGL() {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    renderSkybox();
+
     glBindVertexArray(m_vao);
 
     glUseProgram(m_shader);
+
+    glUniform1i(glGetUniformLocation(m_shader, "fog"), m_fogEnabled);
+    glUniform4fv(glGetUniformLocation(m_shader, "fogColor"), 1, &m_fogColor[0]);
+    glUniform1f(glGetUniformLocation(m_shader, "fogDensity"), m_fogDensity);
+    glUniform1f(glGetUniformLocation(m_shader, "fogStart"), m_fogStart);
+    glUniform1f(glGetUniformLocation(m_shader, "fogEnd"), m_fogEnd);
+    glUniform1f(glGetUniformLocation(m_shader, "fogHeight"), m_fogHeight);
+    glUniform1f(glGetUniformLocation(m_shader, "fogBaseHeight"), m_fogBaseHeight);
 
     glm::vec4 camPos = m_camera.getInverseViewMatrix() * glm::vec4(0.0, 0.0, 0.0, 1.0);
 
@@ -211,13 +354,14 @@ void Realtime::paintGL() {
     for (auto entity : view) {
         // const auto &pos = view.get<Position>(entity);
         const auto &renderable = view.get<Renderable>(entity);
-        
+
         glm::mat4 mvpMat = m_camera.getProjMatrix() * m_camera.getViewMatrix() * renderable.ctm;
 
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "mvpMat"), 1, GL_FALSE, &mvpMat[0][0]);
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "modelMat"), 1, GL_FALSE, &renderable.ctm[0][0]);
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "invTransModelMat"), 1, GL_FALSE,
                            &renderable.inverseTransposectm[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(m_shader, "viewMat"), 1, GL_FALSE, &m_camera.getViewMatrix()[0][0]);
 
         glm::vec4 ambient = metaData.globalData.ka * renderable.cAmbient;
         glUniform4fv(glGetUniformLocation(m_shader, "ambient"), 1, &ambient[0]);
@@ -245,6 +389,57 @@ void Realtime::paintGL() {
 
     paintTexture(m_fbo_texture, settings.perPixelFilter, settings.kernelBasedFilter);
 
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // renderSkybox();
+    GLenum error = glGetError();
+    // std::cout << "ERROR AFTER RENDERING " << error << "\n";
+
+}
+
+void Realtime::renderSkybox() {
+
+    // if (m_cubemap_texture == 0) {
+    //     std::cerr << "ERROR: Invalid cubemap texture" << std::endl;
+    //     return;
+    // } else {
+    //     std::cout << "valid cubemap texture\n";
+    // }
+
+    // std::cout << "VBO for skybox is " << m_skybox_vbo << " and vao for skybox is " << m_skybox_vao << std::endl;
+    // Disable depth writing
+    // glDepthMask(GL_FALSE);
+    // glclear
+    glDisable(GL_DEPTH_TEST);
+
+    // Use skybox shader
+    glUseProgram(m_skybox_shader);
+
+    // Create view matrix without translation
+    glm::mat4 view = glm::mat4(glm::mat3(m_camera.getViewMatrix()));
+
+    // Set uniforms
+    glUniformMatrix4fv(glGetUniformLocation(m_skybox_shader, "view"), 1, GL_FALSE, &view[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(m_skybox_shader, "projection"), 1, GL_FALSE, &m_camera.getProjMatrix()[0][0]);
+    glUniform1i(glGetUniformLocation(m_skybox_shader, "fog"), m_fogEnabled);
+    glUniform4fv(glGetUniformLocation(m_skybox_shader, "fogColor"), 1, &m_fogColor[0]);
+    glUniform1f(glGetUniformLocation(m_skybox_shader, "fogDensity"), m_fogDensity);
+
+
+    // Bind cubemap
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, m_cubemap_texture);
+    glUniform1i(glGetUniformLocation(m_skybox_shader, "skybox"), 2);
+
+    // Draw skybox
+    glBindVertexArray(m_skybox_vao);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
+
+    // Re-enable depth writing
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
+
+    glUseProgram(0);
 }
 
 void Realtime::paintTexture(GLuint texture, bool pixelFilter, bool kernelFilter) {
@@ -253,6 +448,7 @@ void Realtime::paintTexture(GLuint texture, bool pixelFilter, bool kernelFilter)
 
     glUniform1i(glGetUniformLocation(m_texture_shader, "pixelFilter"), pixelFilter);
     glUniform1i(glGetUniformLocation(m_texture_shader, "kernelFilter"), kernelFilter);
+    glUniform1i(glGetUniformLocation(m_texture_shader, "FXAAEnabled"), m_FXAAEnabled);
 
     glBindVertexArray(m_fullscreen_vao);
     // Task 10: Bind "texture" to slot 0
@@ -377,19 +573,19 @@ void Realtime::updateVBO() {
         auto newEntity = registry.create();
         // registry.emplace<Position>(newEntity, shape.primitive.transform.position);
         // registry.emplace<Velocity>(newEntity, shape.primitive.transform.velocity);
-        
-        Renderable newEntityRender = {index, tempData.size() / 6, 
-                                            shape.ctm, 
-                                            shape.primitive.material.cAmbient, 
-                                            shape.primitive.material.cDiffuse, 
-                                            shape.primitive.material.cSpecular, 
-                                            shape.primitive.material.shininess,
-                                            shape.inverseTransposectm};
+
+        Renderable newEntityRender = {index, tempData.size() / 6,
+                                      shape.ctm,
+                                      shape.primitive.material.cAmbient,
+                                      shape.primitive.material.cDiffuse,
+                                      shape.primitive.material.cSpecular,
+                                      shape.primitive.material.shininess,
+                                      shape.inverseTransposectm};
         registry.emplace<Renderable>(newEntity, newEntityRender);
         index += glShape.length;
     }
-    
-    
+
+
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
     glBufferData(GL_ARRAY_BUFFER, shapeData.size() * sizeof(GLfloat), shapeData.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -407,6 +603,8 @@ void Realtime::settingsChanged() {
         cylinder.updateParams(settings.shapeParameter1, settings.shapeParameter2);
         updateVBO();
     }
+    m_fogEnabled = settings.fog;
+    m_FXAAEnabled = settings.FXAA;
     update(); // asks for a PaintGL() call to occur
 }
 
@@ -466,16 +664,16 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
                                                            u_y.x*u_y.z*one_minus_c_y+u_y.y*s_y,
                                                            u_y.y*u_y.z*one_minus_c_y-u_y.x*s_y,
                                                            c_y+pow(u_y.z,2)*one_minus_c_y) *
-                                                glm::mat3(c_x + pow(u_x.x,2)*one_minus_c_x,
-                                                          u_x.x*u_x.y*one_minus_c_x+u_x.z*s_x,
-                                                          u_x.x*u_x.z*one_minus_c_x-u_x.y*s_x,
-                                                          u_x.x*u_x.y*one_minus_c_x-u_x.z*s_x,
-                                                          c_x+pow(u_x.y,2)*one_minus_c_x,
-                                                          u_x.y*u_x.z*one_minus_c_x+u_x.x*s_x,
-                                                          u_x.x*u_x.z*one_minus_c_x+u_x.y*s_x,
-                                                          u_x.y*u_x.z*one_minus_c_x-u_x.x*s_x,
-                                                          c_x+pow(u_x.z,2)*one_minus_c_x) *
-                                                    glm::vec3(metaData.cameraData.look), 1.0);
+                                                     glm::mat3(c_x + pow(u_x.x,2)*one_minus_c_x,
+                                                               u_x.x*u_x.y*one_minus_c_x+u_x.z*s_x,
+                                                               u_x.x*u_x.z*one_minus_c_x-u_x.y*s_x,
+                                                               u_x.x*u_x.y*one_minus_c_x-u_x.z*s_x,
+                                                               c_x+pow(u_x.y,2)*one_minus_c_x,
+                                                               u_x.y*u_x.z*one_minus_c_x+u_x.x*s_x,
+                                                               u_x.x*u_x.z*one_minus_c_x+u_x.y*s_x,
+                                                               u_x.y*u_x.z*one_minus_c_x-u_x.x*s_x,
+                                                               c_x+pow(u_x.z,2)*one_minus_c_x) *
+                                                     glm::vec3(metaData.cameraData.look), 1.0);
 
             m_camera.setViewMatrix(metaData.cameraData.pos, metaData.cameraData.look, metaData.cameraData.up);
         }
@@ -561,6 +759,12 @@ void Realtime::timerEvent(QTimerEvent *event) {
     if (m_keyMap[Qt::Key_Space] && !m_isJumping) {
         m_isJumping = true;
         m_verticalVelocity = m_jumpSpeed;
+        //                                                          glm::vec3(metaData.cameraData.up)), 0));
+        metaData.cameraData.pos += units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
+                                                                glm::vec3(metaData.cameraData.up)), 0));
+    }
+    if (m_keyMap[Qt::Key_Control]) {
+        metaData.cameraData.pos -= units * glm::vec4(0, 1, 0, 0);
     }
 
     m_camera.setViewMatrix(metaData.cameraData.pos, metaData.cameraData.look, metaData.cameraData.up);
