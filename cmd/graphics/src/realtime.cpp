@@ -9,7 +9,6 @@
 #include <stb_image.h>
 #include "settings.h"
 #include "utils/shaderloader.h"
-#include <thread>
 #include <chrono>
 
 #include <numbers>
@@ -36,6 +35,8 @@ Realtime::Realtime(QWidget *parent)
 }
 
 void Realtime::finish() {
+    registry_mutex.lock();
+    terminate = true;
     killTimer(m_timer);
     this->makeCurrent();
 
@@ -57,6 +58,7 @@ void Realtime::finish() {
     glDeleteBuffers(1, &m_skybox_vbo);
     glDeleteTextures(1, &m_cubemap_texture);
     glDeleteProgram(m_skybox_shader);
+    registry_mutex.unlock();
 
     this->doneCurrent();
 }
@@ -200,10 +202,17 @@ void Realtime::run_client() {
     int total = 0;
     bool found[4] = {false, false, false, false};
     while (true) {
+        if (terminate) {
+            return;
+        }
         memset(buffer, 0, 256);
         // make a message and then marshal
         // update message
         registry_mutex.lock();
+        if (terminate) {
+            registry_mutex.unlock();
+            return;
+        }
         serializePlayer(registry.get<Player>(myself), buffer);
         success = client.sendMessage(buffer, 28);
         registry_mutex.unlock();
@@ -232,6 +241,10 @@ void Realtime::run_client() {
             }
 
             registry_mutex.lock();
+            if (terminate) {
+                registry_mutex.unlock();
+                return;
+            }
             // update the registry
             // for every update that we got
             for (int i = 0; i < updates; i++) {
@@ -256,6 +269,8 @@ void Realtime::run_client() {
                     registry.emplace<Renderable>(newEntity, thisRenderable);
                     registry.get<Renderable>(newEntity).ctm = cubeCTM;
                     registry.get<Renderable>(newEntity).inverseTransposectm = glm::inverse(glm::transpose(cubeCTM));
+                    registry.get<Renderable>(camera_ent).min = cubeCTM * glm::vec4(-0.5,-0.5,-0.5,1);
+                    registry.get<Renderable>(camera_ent).max = cubeCTM * glm::vec4(0.5,0.5,0.5,1);
 
                     found[currPlayer.id] = true;
                     continue;
@@ -269,12 +284,14 @@ void Realtime::run_client() {
                         entPlayer.position = currPlayer.position;
                         entPlayer.velocity = currPlayer.velocity;
 
-                        glm::vec3 cubeOffset = glm::vec3(0.0f, 0.0f, 0.2f);
-                        glm::vec3 cubeScale = glm::vec3(0.1f, 0.1f, 0.1f);
+                        glm::vec3 cubeOffset = glm::vec3(0.0f, -0.75, 0.2f);
+                        glm::vec3 cubeScale = glm::vec3(0.5, m_groundLevel, 0.5);
                         glm::mat4 cubeCTM = glm::translate(glm::mat4(1.0f), glm::vec3(entPlayer.position) + cubeOffset);
                         cubeCTM = glm::scale(cubeCTM, cubeScale);
                         registry.get<Renderable>(entity).ctm = cubeCTM;
                         registry.get<Renderable>(entity).inverseTransposectm = glm::inverse(glm::transpose(cubeCTM));
+                        registry.get<Renderable>(camera_ent).min = cubeCTM * glm::vec4(-0.5,-0.5,-0.5,1);
+                        registry.get<Renderable>(camera_ent).max = cubeCTM * glm::vec4(0.5,0.5,0.5,1);
                         break;
                     }
                 }
@@ -814,8 +831,8 @@ void Realtime::sceneChanged() {
 
     if (!thread_started) {
         thread_started = true;
-        std::thread myThread(std::bind(&Realtime::run_client, this));
-        myThread.detach();
+        m_thread = std::thread(&Realtime::run_client, this);
+        // myThread.detach();
     }
     std::cout << "got to the end of scene change" << std::endl;
     update(); // asks for a PaintGL() call to occur
@@ -892,8 +909,8 @@ void Realtime::updateVBO() {
                                             shape.primitive.material.cSpecular, 
                                             shape.primitive.material.shininess,
                                             glm::transpose(glm::inverse(positionCtm)),
-                                            shape.ctm * glm::vec4(-0.5,-0.5,-0.5,1),
-                                            shape.ctm * glm::vec4(0.5,0.5,0.5,1)};
+                                            positionCtm * glm::vec4(-0.5,-0.5,-0.5,1),
+                                            positionCtm * glm::vec4(0.5,0.5,0.5,1)};
             registry.emplace<Renderable>(camera_ent, playerDefault);
             // index += glShape.length;
         }
@@ -955,43 +972,41 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
 
         // Use deltaX and deltaY here to rotate
 
-        if (m_mouseDown) {
-            float x_angle = deltaX * std::numbers::pi / 500.f;
-            glm::vec3 u_x(0, -1, 0);
-            float c_x = glm::cos(x_angle);
-            float s_x = glm::sin(x_angle);
-            float one_minus_c_x = 1.f - c_x;
+        float x_angle = deltaX * std::numbers::pi / 500.f;
+        glm::vec3 u_x(0, -1, 0);
+        float c_x = glm::cos(x_angle);
+        float s_x = glm::sin(x_angle);
+        float one_minus_c_x = 1.f - c_x;
 
-            glm::vec3 u_y = -glm::normalize(glm::cross(glm::vec3(metaData.cameraData.look),
-                                                       glm::vec3(metaData.cameraData.up)));
+        glm::vec3 u_y = -glm::normalize(glm::cross(glm::vec3(metaData.cameraData.look),
+                                                    glm::vec3(metaData.cameraData.up)));
 
-            float y_angle = deltaY * std::numbers::pi / 500.f;
-            float c_y = glm::cos(y_angle);
-            float s_y = glm::sin(y_angle);
-            float one_minus_c_y = 1.f - c_y;
+        float y_angle = deltaY * std::numbers::pi / 500.f;
+        float c_y = glm::cos(y_angle);
+        float s_y = glm::sin(y_angle);
+        float one_minus_c_y = 1.f - c_y;
 
-            metaData.cameraData.look = glm::vec4(glm::mat3(c_y + pow(u_y.y,2)*one_minus_c_y,
-                                                           u_y.x*u_y.y*one_minus_c_y+u_y.z*s_y,
-                                                           u_y.x*u_y.z*one_minus_c_y-u_y.y*s_y,
-                                                           u_y.x*u_y.y*one_minus_c_y-u_y.z*s_y,
-                                                           c_y+pow(u_y.y,2)*one_minus_c_y,
-                                                           u_y.y*u_y.z*one_minus_c_y+u_y.x*s_y,
-                                                           u_y.x*u_y.z*one_minus_c_y+u_y.y*s_y,
-                                                           u_y.y*u_y.z*one_minus_c_y-u_y.x*s_y,
-                                                           c_y+pow(u_y.z,2)*one_minus_c_y) *
-                                                     glm::mat3(c_x + pow(u_x.x,2)*one_minus_c_x,
-                                                               u_x.x*u_x.y*one_minus_c_x+u_x.z*s_x,
-                                                               u_x.x*u_x.z*one_minus_c_x-u_x.y*s_x,
-                                                               u_x.x*u_x.y*one_minus_c_x-u_x.z*s_x,
-                                                               c_x+pow(u_x.y,2)*one_minus_c_x,
-                                                               u_x.y*u_x.z*one_minus_c_x+u_x.x*s_x,
-                                                               u_x.x*u_x.z*one_minus_c_x+u_x.y*s_x,
-                                                               u_x.y*u_x.z*one_minus_c_x-u_x.x*s_x,
-                                                               c_x+pow(u_x.z,2)*one_minus_c_x) *
-                                                     glm::vec3(metaData.cameraData.look), 1.0);
+        metaData.cameraData.look = glm::vec4(glm::mat3(c_y + pow(u_y.y,2)*one_minus_c_y,
+                                                        u_y.x*u_y.y*one_minus_c_y+u_y.z*s_y,
+                                                        u_y.x*u_y.z*one_minus_c_y-u_y.y*s_y,
+                                                        u_y.x*u_y.y*one_minus_c_y-u_y.z*s_y,
+                                                        c_y+pow(u_y.y,2)*one_minus_c_y,
+                                                        u_y.y*u_y.z*one_minus_c_y+u_y.x*s_y,
+                                                        u_y.x*u_y.z*one_minus_c_y+u_y.y*s_y,
+                                                        u_y.y*u_y.z*one_minus_c_y-u_y.x*s_y,
+                                                        c_y+pow(u_y.z,2)*one_minus_c_y) *
+                                                    glm::mat3(c_x + pow(u_x.x,2)*one_minus_c_x,
+                                                            u_x.x*u_x.y*one_minus_c_x+u_x.z*s_x,
+                                                            u_x.x*u_x.z*one_minus_c_x-u_x.y*s_x,
+                                                            u_x.x*u_x.y*one_minus_c_x-u_x.z*s_x,
+                                                            c_x+pow(u_x.y,2)*one_minus_c_x,
+                                                            u_x.y*u_x.z*one_minus_c_x+u_x.x*s_x,
+                                                            u_x.x*u_x.z*one_minus_c_x+u_x.y*s_x,
+                                                            u_x.y*u_x.z*one_minus_c_x-u_x.x*s_x,
+                                                            c_x+pow(u_x.z,2)*one_minus_c_x) *
+                                                    glm::vec3(metaData.cameraData.look), 1.0);
 
-            m_camera.setViewMatrix(metaData.cameraData.pos, metaData.cameraData.look, metaData.cameraData.up);
-        }
+        m_camera.setViewMatrix(metaData.cameraData.pos, metaData.cameraData.look, metaData.cameraData.up);
 
         update(); // asks for a PaintGL() call to occur
     }
@@ -1042,21 +1057,20 @@ void Realtime::timerEvent(QTimerEvent *event) {
         metaData.cameraData.pos += move;
     }
 
+    // if (!attack && m)
+
 
     glm::vec4 temp = metaData.cameraData.pos;
 
     if (m_isJump) {
         m_verticalVelocity += m_gravity * deltaTime;
         metaData.cameraData.pos.y += m_verticalVelocity * deltaTime;
-        // metaData.cameraData.pos.y += m_verticalVelocity * deltaTime;
     }
 
     float move = m_verticalVelocity * deltaTime;
 
-    glm::vec4 camMin = metaData.cameraData.pos - glm::vec4(0.5, 1, 0.5, 0);
+    glm::vec4 camMin = metaData.cameraData.pos - glm::vec4(0.5, m_groundLevel, 0.5, 0);
     glm::vec4 camMax = metaData.cameraData.pos + glm::vec4(0.5, 0, 0.5, 0);
-
-    // std::pair<bool, bool> collision = isCollision(camMin, camMax);
 
     std::pair<bool, bool> collision = isCollision(camMin, camMax);
     if (collision.first) {
@@ -1068,7 +1082,6 @@ void Realtime::timerEvent(QTimerEvent *event) {
         } else {
             oldPos.y += move;
             metaData.cameraData.pos = oldPos;
-
         }
     }
     else {
@@ -1084,10 +1097,12 @@ void Realtime::timerEvent(QTimerEvent *event) {
     registry.get<Player>(camera_ent).position = metaData.cameraData.pos;
     glm::vec3 cubeOffset = glm::vec3(0.0f, 0.0f, 0.2f); // Example: 1 unit in front of camera
     glm::vec3 cubeScale = glm::vec3(0.1f, 0.1f, 0.1f);
-    glm::mat4 cubeCTM = glm::translate(glm::mat4(1.0f), glm::vec3(metaData.cameraData.pos) + cubeOffset);
+    glm::mat4 cubeCTM = glm::translate(glm::mat4(1.0f), glm::vec3(metaData.cameraData.pos));
     cubeCTM = glm::scale(cubeCTM, cubeScale);
     registry.get<Renderable>(camera_ent).ctm = cubeCTM;
     registry.get<Renderable>(camera_ent).inverseTransposectm = glm::inverse(glm::transpose(cubeCTM));
+    registry.get<Renderable>(camera_ent).min = metaData.cameraData.pos - glm::vec4(0.5, m_groundLevel, 0.5, 0);
+    registry.get<Renderable>(camera_ent).max = metaData.cameraData.pos + glm::vec4(0.5, 0, 0.5, 0);
     registry_mutex.unlock();
     // velocity can probably be taken from move
     // orientation vector????
