@@ -28,6 +28,7 @@ Realtime::Realtime(QWidget *parent)
     m_keyMap[Qt::Key_D]       = false;
     m_keyMap[Qt::Key_Control] = false;
     m_keyMap[Qt::Key_Space]   = false;
+    m_keyMap[Qt::Key_E]   = false;
 
     // If you must use this function, do not edit anything above this
     // TCPClient client("127.0.0.1", 50050);
@@ -73,7 +74,7 @@ uint32_t htonf(float value) {
 }
 
 // Serialize Player struct to network byte order
-void serializePlayer(const Player& player, char* buffer) {
+void serializePlayer(const Player& player, char* buffer, bool hitEvent = false) {
     // Serialize id (4 bytes)
     uint32_t networkId = htonl(player.id);
     memcpy(buffer, &networkId, sizeof(uint32_t));
@@ -91,11 +92,17 @@ void serializePlayer(const Player& player, char* buffer) {
 
     // Serialize velocity (4 * 4 = 16 bytes)
     uint32_t networkVelocityX = htonf(player.velocity.x);
+    uint32_t hitEventVelocity = htonf(1000.0f);
     uint32_t networkVelocityY = htonf(player.velocity.y);
     uint32_t networkVelocityZ = htonf(player.velocity.z);
     //uint32_t networkVelocityW = htonf(player.velocity.w);
 
-    memcpy(buffer + 16, &networkVelocityX, sizeof(uint32_t));
+    if (hitEvent) {
+        memcpy(buffer + 16, &hitEventVelocity, sizeof(uint32_t));
+    } else {
+        memcpy(buffer + 16, &networkVelocityX, sizeof(uint32_t));
+    }
+
     memcpy(buffer + 20, &networkVelocityY, sizeof(uint32_t));
     memcpy(buffer + 24, &networkVelocityZ, sizeof(uint32_t));
 }
@@ -151,6 +158,10 @@ Player deserializePlayer(const char* buffer) {
     player.velocity.w = 0.f;
 
     return player;
+}
+
+static bool areFloatsEqual(float a, float b, float epsilon = 1e-5f) {
+    return std::fabs(a - b) < epsilon;
 }
 
 void Realtime::run_client() {
@@ -214,7 +225,8 @@ void Realtime::run_client() {
             registry_mutex.unlock();
             return;
         }
-        serializePlayer(registry.get<Player>(myself), buffer);
+        serializePlayer(registry.get<Player>(myself), buffer, hitEvent);
+        hitEvent = false;
         success = client.sendMessage(buffer, 28);
         registry_mutex.unlock();
         if (!success) {
@@ -253,6 +265,26 @@ void Realtime::run_client() {
                 Player currPlayer = data[i];
                 // don't update yourself
                 if (currPlayer.id == my_id) {
+                    if (areFloatsEqual(currPlayer.velocity.x, -1000.0f)) {
+                        float units = 0.5f;
+                        glm::vec4 move = units * glm::vec4(glm::normalize(glm::vec3(metaData.cameraData.look)), 0);
+                        move.y = 0;
+                        metaData.cameraData.pos -= move;
+                        m_camera.setViewMatrix(metaData.cameraData.pos, metaData.cameraData.look, metaData.cameraData.up);
+
+                        auto &entPlayer = view.get<Player>(camera_ent);
+                        entPlayer.position = metaData.cameraData.pos;
+
+                        // glm::vec3 cubeOffset = glm::vec3(0.0f, -0.75, 0.2f);
+                        glm::vec3 cubeScale = glm::vec3(0.5, m_groundLevel, 0.5);
+                        glm::mat4 cubeCTM = glm::translate(glm::mat4(1.0f), glm::vec3(entPlayer.position));
+                        cubeCTM = glm::scale(cubeCTM, cubeScale);
+                        registry.get<Renderable>(camera_ent).ctm = cubeCTM;
+                        registry.get<Renderable>(camera_ent).inverseTransposectm = glm::inverse(glm::transpose(cubeCTM));
+                        registry.get<Renderable>(camera_ent).min = cubeCTM * glm::vec4(-0.5,-0.5,-0.5,1);
+                        registry.get<Renderable>(camera_ent).max = cubeCTM * glm::vec4(0.5,0.5,0.5,1);
+
+                    }
                     continue;
                 }
                 // curr_id = id from the update
@@ -1191,6 +1223,12 @@ void Realtime::timerEvent(QTimerEvent *event) {
                                                                              glm::vec3(metaData.cameraData.up)), 0));
         move.y = 0;
         metaData.cameraData.pos += move;
+    }
+
+    if (m_keyMap[Qt::Key_E]) {
+        // registry_mutex.lock();
+        hitEvent = true;
+        // registry_mutex.unlock();
     }
 
     // if (!attack && m)

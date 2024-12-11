@@ -198,6 +198,8 @@ private:
     bool thread_started = false;
 
     bool terminate = false;
+    
+    bool hitEvent = false;
 
     Renderable playerDefault = {};
 
