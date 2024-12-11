@@ -64,6 +64,7 @@ func RegisterPlayer() int32 {
 
 	gameInfoMutex.Lock()
 	playerInfo = append(playerInfo, &Player{PlayerId:  p_id})
+	fmt.Println("Player registered with id:", p_id)
 	gameInfoMutex.Unlock()
 	
 	return p_id
@@ -124,7 +125,6 @@ func main() {
 	defer conn.Close()
 
 	buffer := make([]byte, 1024)
-	
 	for {
 		n, addr, err := conn.ReadFromUDP(buffer)
 		if err != nil {
@@ -135,7 +135,9 @@ func main() {
 		var player Player
 		bytesToPlayerStruct(buffer, n, &player)
 		if player.PlayerId == -1 {
-			RegisterPlayer()
+			fmt.Println("Registering player")
+			p_id := RegisterPlayer()
+			player.PlayerId = p_id
 			sendPlayerId(conn, addr, &player)
 		} else {
 			updatePlayerInformation(player.PlayerId, &player)
@@ -154,6 +156,10 @@ func bytesToPlayerStruct(buf []byte, n int, player *Player) {
 	err := binary.Read(reader, binary.BigEndian, &player.PlayerId)
 	if err != nil {
 		fmt.Println("Error:", err)
+		return
+	}
+
+	if (n == 4) {
 		return
 	}
 

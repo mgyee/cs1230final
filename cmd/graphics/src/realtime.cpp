@@ -144,25 +144,24 @@ Player deserializePlayer(const char* buffer) {
 }
 
 void Realtime::run_client() {
+    // should connect to the server
     UDPClient client("127.0.0.1", 12345, 5);
-    // bool success = client.connectToServer();
-    // if (!success) {
-    //     std::cout << "failed to connect loser" << std::endl;
-    //     return;
-    // }
-
-    char buffer[256] = {'c', 0};
+    char buffer[256] = {0};
+    memset(buffer, 0, 256);
+    int initialValue = -1;
+    memcpy(buffer, &initialValue, sizeof(int));
     int status;
     bool success;
 
 
-    success = client.sendMessage(buffer, 1);
+    success = client.sendMessage(buffer, 4);
 
     if (!success) {
         std::cout << "failed to send the connecting message" << std::endl;
         return;
     }
     // maybe no timeout on this one
+    memset(buffer, 0, 256);
     status = client.readMessage(buffer, 256);
 
     if (status == -1) {
@@ -208,9 +207,6 @@ void Realtime::run_client() {
         // update stuff; so read, timeout, update
         // double check status
         status = client.readMessage(buffer, 256);
-        // std::cout << "current read: " << status << std::endl;
-        // total += status;
-        // std::cout << "total bytes read :" << total << std::endl;
         if (status == -1) {
             std::cout << "closing because of err in read" << std::endl;
             //break;
@@ -231,6 +227,7 @@ void Realtime::run_client() {
             // update the registry
             // for every update that we got
             for (int i = 0; i < updates; i++) {
+                // std::cout << "i value: " << i << std::endl;
                 Player currPlayer = data[i];
                 // don't update yourself
                 if (currPlayer.id == my_id) {
@@ -249,8 +246,13 @@ void Realtime::run_client() {
                     if (currPlayer.id == view.get<Player>(entity).id) {
                         // data on the right should be actual updates
                         // placeholders
-                        view.get<Player>(entity).position = currPlayer.position;
-                        view.get<Player>(entity).velocity = currPlayer.velocity;
+                        auto &entPlayer = view.get<Player>(entity);
+                        entPlayer.position = currPlayer.position;
+                        entPlayer.velocity = currPlayer.velocity;
+                        // std::cout << "Here is the player's id: " << entPlayer.id << std::endl;
+                        // std::cout << "Here is the player's position.x: " << entPlayer.position.x << std::endl;
+                        // std::cout << "Here is the player's position.y: " << entPlayer.position.y << std::endl;
+                        // std::cout << "Here is the player's position.z: " << entPlayer.position.z << std::endl;
                         break;
                     }
                 }
