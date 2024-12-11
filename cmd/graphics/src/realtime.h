@@ -24,6 +24,7 @@
 //#include "clientarm.h"
 #include "clientwin.h"
 #include "udpclientwin.h"
+#include "udpclientarm.h"
 #include <mutex>
 
 struct glShape {

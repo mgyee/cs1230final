@@ -72,6 +72,7 @@ add_executable(${PROJECT_NAME}
     src/clientarm.h src/clientarm.cpp
     src/clientwin.h src/clientwin.cpp
     src/udpclientwin.h src/udpclientwin.cpp
+    src/udpclientarm.h src/udpclientarm.cpp
 )
 
 # GLM: this creates its library and allows you to `#include "glm/..."`
