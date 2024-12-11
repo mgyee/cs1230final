@@ -720,6 +720,7 @@ void Realtime::sceneChanged() {
     m_camera.setHeightAngle(metaData.cameraData.heightAngle);
     m_camera.setViewMatrix(metaData.cameraData.pos, metaData.cameraData.look, metaData.cameraData.up);
     m_camera.setProjMatrix(settings.nearPlane, settings.farPlane);
+    m_verticalVelocity = 0;
     registry_mutex.lock();
     registry.get<Player>(camera_ent).position = metaData.cameraData.pos;
     registry_mutex.unlock();
@@ -985,7 +986,6 @@ void Realtime::timerEvent(QTimerEvent *event) {
     // std::pair<bool, bool> collision = isCollision(camMin, camMax);
 
     std::pair<bool, bool> collision = isCollision(camMin, camMax);
-
     if (collision.first) {
         if (collision.second) {
             m_verticalVelocity = 0;
@@ -997,7 +997,8 @@ void Realtime::timerEvent(QTimerEvent *event) {
             metaData.cameraData.pos = oldPos;
 
         }
-    } else {
+    }
+    else {
         m_isJump = true;
     }
 
