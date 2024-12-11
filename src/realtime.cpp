@@ -580,7 +580,9 @@ void Realtime::updateVBO() {
                                       shape.primitive.material.cDiffuse,
                                       shape.primitive.material.cSpecular,
                                       shape.primitive.material.shininess,
-                                      shape.inverseTransposectm};
+                                      shape.inverseTransposectm,
+                                      shape.ctm * glm::vec4(-0.5,-0.5,-0.5,1),
+                                      shape.ctm * glm::vec4(0.5,0.5,0.5,1)};
         registry.emplace<Renderable>(newEntity, newEntityRender);
         index += glShape.length;
     }
@@ -616,6 +618,9 @@ void Realtime::keyPressEvent(QKeyEvent *event) {
 
 void Realtime::keyReleaseEvent(QKeyEvent *event) {
     m_keyMap[Qt::Key(event->key())] = false;
+    // if (Qt::Key(event->key()) == Qt::Key_Space) {
+    //     m_isJump = false;
+    // }
 }
 
 void Realtime::mousePressEvent(QMouseEvent *event) {
@@ -690,6 +695,8 @@ void Realtime::timerEvent(QTimerEvent *event) {
     // Use deltaTime and m_keyMap here to move around
 
     float units = 5.f * deltaTime;
+
+    glm::vec4 oldPos = metaData.cameraData.pos;
     
     // auto view = registry.view<Position, Velocity>();
 
@@ -744,33 +751,91 @@ void Realtime::timerEvent(QTimerEvent *event) {
     //     // metaData.cameraData.pos += units * glm::vec4(0, 1, 0, 0);
     // }
 
-    if (m_isJumping) {
+    if (m_isJump) {
         m_verticalVelocity += m_gravity * deltaTime;
-
         metaData.cameraData.pos.y += m_verticalVelocity * deltaTime;
+        // metaData.cameraData.pos.y += m_verticalVelocity * deltaTime;
+    }
 
-        if (metaData.cameraData.pos.y <= m_groundLevel) {
-            metaData.cameraData.pos.y = m_groundLevel;
-            m_verticalVelocity = 0.0f;
-            m_isJumping = false;
+    glm::vec4 camMin = metaData.cameraData.pos - glm::vec4(0.5, 1, 0.5, 0);
+    glm::vec4 camMax = metaData.cameraData.pos + glm::vec4(0.5, 0, 0.5, 0);
+
+    std::pair<bool, bool> collision = isCollision(camMin, camMax);
+
+    if (collision.first) {
+        metaData.cameraData.pos = oldPos;
+        if (collision.second) {
+            m_jumpCount = 2;
+            m_isJump = false;
+            m_verticalVelocity = 0;
         }
     }
 
-    if (m_keyMap[Qt::Key_Space] && !m_isJumping) {
-        m_isJumping = true;
+    if (m_keyMap[Qt::Key_Space] && m_jumpCount > 0 && !m_isJump) {
+        m_jumpCount--;
         m_verticalVelocity = m_jumpSpeed;
-        //                                                          glm::vec3(metaData.cameraData.up)), 0));
-        metaData.cameraData.pos += units * glm::normalize(glm::vec4(glm::cross(glm::vec3(metaData.cameraData.look),
-                                                                glm::vec3(metaData.cameraData.up)), 0));
+        m_isJump = true;
     }
+
     if (m_keyMap[Qt::Key_Control]) {
         metaData.cameraData.pos -= units * glm::vec4(0, 1, 0, 0);
     }
+
+    // if (metaData.cameraData.pos.y < m_groundLevel) {
+    //     metaData.cameraData.pos.y = m_groundLevel;
+    //     m_verticalVelocity = 0.0f;
+    //     m_jumpCount = 2;
+    //     m_isJump = false;
+    // }
 
     m_camera.setViewMatrix(metaData.cameraData.pos, metaData.cameraData.look, metaData.cameraData.up);
 
     update(); // asks for a PaintGL() call to occur
 }
+
+std::pair<bool, bool> Realtime::isCollision(glm::vec4 camMin, glm::vec4 camMax) {
+    auto view = registry.view<Renderable>();
+
+    for (auto entity : view) {
+        const auto& renderable = view.get<Renderable>(entity);
+
+        bool intersectsX = camMax.x > renderable.min.x && camMax.x < renderable.max.x;
+        bool intersectsY = camMax.y > renderable.min.y && camMax.y < renderable.max.y;
+        bool intersectsZ = camMax.z > renderable.min.z && camMax.z < renderable.max.z;
+
+        if (intersectsX && intersectsY && intersectsZ) {
+            bool landing = camMin.y >= renderable.max.y - 1e-1;
+            return std::make_pair(true, landing);
+        }
+    }
+    return std::make_pair(false, false);
+}
+
+// std::pair<bool, bool> Realtime::isCollision(glm::vec4 newPos) {
+//     auto view = registry.view<Renderable>();
+
+//     std::cout << "hi " << newPos.x << " " << newPos.y << " " << newPos.z << std::endl;
+//     for (auto entity : view) {
+//         const auto& renderable = view.get<Renderable>(entity);
+
+//         std::cout << "x " << renderable.min.x << " " << renderable.max.x << std::endl;
+//         std::cout << "y " << renderable.min.y << " " << renderable.max.y << std::endl;
+//         std::cout << "z " << renderable.min.z << " " << renderable.max.z << std::endl;
+//         std::cout << "-----------" << std::endl;
+
+
+//         if (newPos.x >= renderable.min.x && newPos.x <= renderable.max.x &&
+//             newPos.y >= renderable.min.y && newPos.y <= renderable.max.y &&
+//             newPos.z >= renderable.min.z && newPos.z <= renderable.max.z) {
+//             bool landing = false;
+//             if (newPos.y + 1e-1 > renderable.max.y) {
+//                 landing = true;
+//             }
+//             return std::pair<bool, bool>{true, landing};
+//         }
+//     }
+//     return std::pair<bool, bool>{false, false};
+// }
 
 // DO NOT EDIT
 void Realtime::saveViewportImage(std::string filePath) {

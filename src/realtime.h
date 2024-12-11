@@ -48,6 +48,8 @@ struct Renderable {
     glm::vec4 cSpecular;
     float shininess;
     glm::mat4 inverseTransposectm;
+    glm::vec4 min;
+    glm::vec4 max;
 };
 
 struct SkyBox {
@@ -134,7 +136,10 @@ private:
     const float m_gravity = -9.8f;
     const float m_jumpSpeed = 5.0f;
     const float m_groundLevel = 1.0f;
-    bool m_isJumping = false;
+    int m_jumpCount = 2;
+    bool m_isJump = false;
+
+    std::pair<bool, bool> isCollision(glm::vec4 camMin, glm::vec4 camMax);
 
     void updateVBO();
     void paintTexture(GLuint texture, bool pixelFilter, bool kernelFilter);
