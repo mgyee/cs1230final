@@ -1030,7 +1030,7 @@ std::pair<bool, bool> Realtime::isCollision(glm::vec4 camMin, glm::vec4 camMax) 
         bool intersectsZ = camMax.z > renderable.min.z && camMin.z < renderable.max.z;
 
         if (intersectsX && intersectsY && intersectsZ) {
-            bool landing = camMin.y >= renderable.max.y - 1e-1;
+            bool landing = camMin.y >= renderable.max.y - 0.2f;
             return std::make_pair(true, landing);
         }
     }
