@@ -1239,6 +1239,11 @@ void Realtime::timerEvent(QTimerEvent *event) {
     if (m_isJump) {
         m_verticalVelocity += m_gravity * deltaTime;
         metaData.cameraData.pos.y += m_verticalVelocity * deltaTime;
+
+        if (metaData.cameraData.pos.y < -20) {
+            m_verticalVelocity = 0;
+            metaData.cameraData.pos = glm::vec4(-3,5,4,1);
+        }
     }
 
     float move = m_verticalVelocity * deltaTime;
