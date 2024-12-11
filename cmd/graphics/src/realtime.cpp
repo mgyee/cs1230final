@@ -288,10 +288,6 @@ void Realtime::run_client() {
         }
         //
     }
-
-    // std::this_thread::sleep_for(std::chrono::seconds(2));
-    // std::cout << "now I am closing" << std::endl;
-    // return;
 }
 
 void Realtime::initializeGL() {
@@ -332,10 +328,13 @@ void Realtime::initializeGL() {
     glBindVertexArray(m_vao);
 
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(0));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), reinterpret_cast<void *>(0));
 
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
+
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), reinterpret_cast<void*>(6 * sizeof(GLfloat)));
 
     // creating one entity
 
@@ -346,6 +345,107 @@ void Realtime::initializeGL() {
 
     glUniform1i(glGetUniformLocation(m_texture_shader, "sampler"), 0);
 
+    glUseProgram(0);
+
+    glUseProgram(m_shader);
+    glUniform1i(glGetUniformLocation(m_shader, "danielSampler"), 4);
+    glUniform1i(glGetUniformLocation(m_shader, "gavinSampler"), 5);
+    glUniform1i(glGetUniformLocation(m_shader, "evanSampler"), 6);
+
+    // Daniel ------------
+    QString daniel_filepath = QString("resources/daniel.jpg");
+
+    // Task 1: Obtain image from filepath
+    m_danielImage = QImage(daniel_filepath);
+
+    qDebug() << "Image details:"
+             << "Width:" << m_danielImage.width()
+             << "Height:" << m_danielImage.height()
+             << "Is null:" << m_danielImage.isNull()
+             << "Format:" << m_danielImage.format();
+
+    // Task 2: Format image to fit OpenGL
+    m_danielImage = m_danielImage.convertToFormat(QImage::Format_RGBA8888).mirrored();
+
+    glGenTextures(1, &m_daniel_id);
+
+    if (m_daniel_id == 0) {
+        qDebug() << "Failed to generate texture ID";
+    }
+
+
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, m_daniel_id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_danielImage.width(), m_danielImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, m_danielImage.bits());
+
+    GLenum errortexture = glGetError();
+    if (errortexture != GL_NO_ERROR) {
+        qDebug() << "OpenGL texture loading error:" << errortexture;
+    }
+
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Gavin ------------
+    QString gavin_filepath = QString("resources/gavin.jpg");
+
+    // Task 1: Obtain image from filepath
+    m_gavinImage = QImage(gavin_filepath);
+
+    qDebug() << "Image details:"
+             << "Width:" << m_gavinImage.width()
+             << "Height:" << m_gavinImage.height()
+             << "Is null:" << m_gavinImage.isNull()
+             << "Format:" << m_gavinImage.format();
+
+    // Task 2: Format image to fit OpenGL
+    m_gavinImage = m_gavinImage.convertToFormat(QImage::Format_RGBA8888).mirrored();
+
+    glGenTextures(1, &m_gavin_id);
+
+    if (m_gavin_id == 0) {
+        qDebug() << "Failed to generate texture ID";
+    }
+
+
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_2D, m_gavin_id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_gavinImage.width(), m_gavinImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, m_gavinImage.bits());
+
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    // Evan ------------
+    QString evan_filepath = QString("resources/evan.jpg");
+
+    // Task 1: Obtain image from filepath
+    m_evanImage = QImage(evan_filepath);
+
+
+    // Task 2: Format image to fit OpenGL
+    m_evanImage = m_evanImage.convertToFormat(QImage::Format_RGBA8888).mirrored();
+
+    glGenTextures(1, &m_evan_id);
+
+    if (m_evan_id == 0) {
+        qDebug() << "Failed to generate texture ID";
+    }
+
+
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_2D, m_evan_id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_evanImage.width(), m_evanImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, m_evanImage.bits());
+
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
     glUseProgram(0);
 
     std::vector<GLfloat> fullscreen_quad_data =
@@ -380,6 +480,7 @@ void Realtime::initializeGL() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), nullptr);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void*>(3 * sizeof(GLfloat)));
+
 
     // Unbind the fullscreen quad's VBO and VAO
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -595,7 +696,7 @@ void Realtime::paintGL() {
     glUniform4fv(glGetUniformLocation(m_shader, "camPos"), 1, &camPos[0]);
 
     registry_mutex.lock();
-    auto view = registry.view<Renderable>();
+    auto view = registry.view<Renderable>(entt::exclude<Player>);
     for (auto entity : view) {
         // const auto &pos = view.get<Position>(entity);
         const auto &renderable = view.get<Renderable>(entity);
@@ -618,38 +719,64 @@ void Realtime::paintGL() {
         glUniform4fv(glGetUniformLocation(m_shader, "specular"), 1, &specular[0]);
 
         glUniform1f(glGetUniformLocation(m_shader, "shininess"), renderable.shininess);
+        glUniform1i(glGetUniformLocation(m_shader, "isUsingDaniel"), false);
+        glUniform1i(glGetUniformLocation(m_shader, "isUsingEvan"), false);
+        glUniform1i(glGetUniformLocation(m_shader, "isUsingGavin"), false);
 
         glDrawArrays(GL_TRIANGLES, renderable.index, renderable.vertexCount);
     }
+
+
+    auto view2 = registry.view<Renderable, Player>();
+    for (auto entity : view2) {
+        // const auto &pos = view.get<Position>(entity);
+        const auto &renderable = view2.get<Renderable>(entity);
+        const auto &playerComponent = view2.get<Player>(entity);
+
+        glm::mat4 mvpMat = m_camera.getProjMatrix() * m_camera.getViewMatrix() * renderable.ctm;
+
+        glUniformMatrix4fv(glGetUniformLocation(m_shader, "mvpMat"), 1, GL_FALSE, &mvpMat[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(m_shader, "modelMat"), 1, GL_FALSE, &renderable.ctm[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(m_shader, "invTransModelMat"), 1, GL_FALSE,
+                           &renderable.inverseTransposectm[0][0]);
+        glUniformMatrix4fv(glGetUniformLocation(m_shader, "viewMat"), 1, GL_FALSE, &m_camera.getViewMatrix()[0][0]);
+
+        glm::vec4 ambient = metaData.globalData.ka * renderable.cAmbient;
+        glUniform4fv(glGetUniformLocation(m_shader, "ambient"), 1, &ambient[0]);
+
+        glm::vec4 diffuse = metaData.globalData.kd * renderable.cDiffuse;
+        glUniform4fv(glGetUniformLocation(m_shader, "diffuse"), 1, &diffuse[0]);
+
+        glm::vec4 specular = metaData.globalData.ks * renderable.cSpecular;
+        glUniform4fv(glGetUniformLocation(m_shader, "specular"), 1, &specular[0]);
+
+        glUniform1f(glGetUniformLocation(m_shader, "shininess"), renderable.shininess);
+
+        if (playerComponent.id == 0) {
+            glUniform1i(glGetUniformLocation(m_shader, "isUsingDaniel"), true);
+
+        glActiveTexture(GL_TEXTURE4);
+
+        glBindTexture(GL_TEXTURE_2D, m_daniel_id);
+        } else if (playerComponent.id == 1) {
+            glUniform1i(glGetUniformLocation(m_shader, "isUsingGavin"), true);
+
+        glActiveTexture(GL_TEXTURE5);
+
+        glBindTexture(GL_TEXTURE_2D, m_gavin_id);
+        } else {
+            glUniform1i(glGetUniformLocation(m_shader, "isUsingEvan"), true);
+
+            glActiveTexture(GL_TEXTURE6);
+
+            glBindTexture(GL_TEXTURE_2D, m_evan_id);
+        }
+
+        glDrawArrays(GL_TRIANGLES, renderable.index, renderable.vertexCount);
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
     registry_mutex.unlock();
-
-    // auto newView = registry.view<Renderable, Player>();
-
-    //  for (auto entity : newView) {
-    //     // const auto &pos = view.get<Position>(entity);
-    //     const auto &renderable = newView.get<Renderable>(entity);
-
-    //     glm::mat4 mvpMat = m_camera.getProjMatrix() * glm::mat4(1.0) * renderable.ctm;
-
-    //     glUniformMatrix4fv(glGetUniformLocation(m_shader, "mvpMat"), 1, GL_FALSE, &mvpMat[0][0]);
-    //     glUniformMatrix4fv(glGetUniformLocation(m_shader, "modelMat"), 1, GL_FALSE, &renderable.ctm[0][0]);
-    //     glUniformMatrix4fv(glGetUniformLocation(m_shader, "invTransModelMat"), 1, GL_FALSE,
-    //                        &renderable.inverseTransposectm[0][0]);
-    //     glUniformMatrix4fv(glGetUniformLocation(m_shader, "viewMat"), 1, GL_FALSE, &glm::mat4(1.0)[0][0]);
-
-    //     glm::vec4 ambient = metaData.globalData.ka * renderable.cAmbient;
-    //     glUniform4fv(glGetUniformLocation(m_shader, "ambient"), 1, &ambient[0]);
-
-    //     glm::vec4 diffuse = metaData.globalData.kd * renderable.cDiffuse;
-    //     glUniform4fv(glGetUniformLocation(m_shader, "diffuse"), 1, &diffuse[0]);
-
-    //     glm::vec4 specular = metaData.globalData.ks * renderable.cSpecular;
-    //     glUniform4fv(glGetUniformLocation(m_shader, "specular"), 1, &specular[0]);
-
-    //     glUniform1f(glGetUniformLocation(m_shader, "shininess"), renderable.shininess);
-
-    //     glDrawArrays(GL_TRIANGLES, renderable.index, renderable.vertexCount);
-    // }
 
     glBindVertexArray(0);
 
@@ -812,11 +939,11 @@ void Realtime::sceneChanged() {
     glUniform1i(glGetUniformLocation(m_shader, "lightsCount"), i);
     glUseProgram(0);
 
-    if (!thread_started) {
-        thread_started = true;
-        std::thread myThread(std::bind(&Realtime::run_client, this));
-        myThread.detach();
-    }
+    // if (!thread_started) {
+    //     thread_started = true;
+    //     std::thread myThread(std::bind(&Realtime::run_client, this));
+    //     myThread.detach();
+    // }
     std::cout << "got to the end of scene change" << std::endl;
     update(); // asks for a PaintGL() call to occur
 }
@@ -844,21 +971,26 @@ void Realtime::updateVBO() {
         switch (shape.primitive.type) {
         case PrimitiveType::PRIMITIVE_CONE:
             tempData = cone.generateShape();
+            std::cout << "size of the tempdata: for cone " << tempData.size() << std::endl;
             break;
         case PrimitiveType::PRIMITIVE_CYLINDER:
             tempData = cylinder.generateShape();
+            std::cout << "size of the tempdata: for cylinder " << tempData.size() << std::endl;
             break;
         case PrimitiveType::PRIMITIVE_SPHERE:
+            std::cout << "size of the tempdata: for sphere " << tempData.size() << std::endl;
             tempData = sphere.generateShape();
             break;
         case PrimitiveType::PRIMITIVE_CUBE:
+            std::cout << "size of the tempdata: for cube " << tempData.size() << std::endl;
             tempData = cube.generateShape();
             cubeFound = true;
             break;
         case PrimitiveType::PRIMITIVE_MESH:
             break;
         }
-        glShape glShape = {shape, index, static_cast<unsigned long>(tempData.size() / 6)};
+
+        glShape glShape = {shape, index, static_cast<unsigned long>(tempData.size() / 8)};
         glShapes.push_back(glShape);
 
         shapeData.insert(shapeData.end(), tempData.begin(), tempData.end());
@@ -867,12 +999,14 @@ void Realtime::updateVBO() {
         auto newEntity = registry.create();
         // registry.emplace<Position>(newEntity, shape.primitive.transform.position);
         // registry.emplace<Velocity>(newEntity, shape.primitive.transform.velocity);
+
+        // std::cout << "Size of vertex count is " << tempData.size() << "\n";
         
-        Renderable newEntityRender = {index, static_cast<unsigned long>(tempData.size() / 6),
-                                            shape.ctm, 
-                                            shape.primitive.material.cAmbient, 
-                                            shape.primitive.material.cDiffuse, 
-                                            shape.primitive.material.cSpecular, 
+        Renderable newEntityRender = {index, static_cast<unsigned long>(tempData.size() / 8),
+                                            shape.ctm,
+                                            shape.primitive.material.cAmbient,
+                                            shape.primitive.material.cDiffuse,
+                                            shape.primitive.material.cSpecular,
                                             shape.primitive.material.shininess,
                                             shape.inverseTransposectm,
                                             shape.ctm * glm::vec4(-0.5,-0.5,-0.5,1),
@@ -885,11 +1019,11 @@ void Realtime::updateVBO() {
             glm::mat4 positionCtm = glm::mat4(1.0);
             // when you make a new player, just set the [3] to their position
             positionCtm[3] = metaData.cameraData.pos + 2.0f;
-            playerDefault = {index, static_cast<unsigned long>(tempData.size() / 6),
-                                            positionCtm, 
-                                            shape.primitive.material.cAmbient, 
-                                            shape.primitive.material.cDiffuse, 
-                                            shape.primitive.material.cSpecular, 
+            playerDefault = {index, static_cast<unsigned long>(tempData.size() / 8),
+                                            positionCtm,
+                                            shape.primitive.material.cAmbient,
+                                            shape.primitive.material.cDiffuse,
+                                            shape.primitive.material.cSpecular,
                                             shape.primitive.material.shininess,
                                             glm::transpose(glm::inverse(positionCtm)),
                                             shape.ctm * glm::vec4(-0.5,-0.5,-0.5,1),
@@ -1082,8 +1216,8 @@ void Realtime::timerEvent(QTimerEvent *event) {
 
     registry_mutex.lock();
     registry.get<Player>(camera_ent).position = metaData.cameraData.pos;
-    glm::vec3 cubeOffset = glm::vec3(0.0f, 0.0f, 0.2f); // Example: 1 unit in front of camera
-    glm::vec3 cubeScale = glm::vec3(0.1f, 0.1f, 0.1f);
+    glm::vec3 cubeOffset = glm::vec3(1.0f, -0.5f, 0.0f); // Example: 1 unit in front of camera
+    glm::vec3 cubeScale = glm::vec3(0.35f, 0.35f, 0.35f);
     glm::mat4 cubeCTM = glm::translate(glm::mat4(1.0f), glm::vec3(metaData.cameraData.pos) + cubeOffset);
     cubeCTM = glm::scale(cubeCTM, cubeScale);
     registry.get<Renderable>(camera_ent).ctm = cubeCTM;

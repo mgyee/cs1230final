@@ -5,8 +5,13 @@ out vec4 fragColor;
 in vec3 worldPos;
 in vec3 worldNorm;
 in vec4 eyeSpacePos;
+in vec2 outUV;
 
 uniform vec4 ambient;
+
+uniform sampler2D danielSampler;
+uniform sampler2D gavinSampler;
+uniform sampler2D evanSampler;
 
 uniform vec4 diffuse;
 uniform vec4 specular;
@@ -21,6 +26,10 @@ uniform float fogStart;
 uniform float fogEnd;
 uniform float fogHeight;
 uniform float fogBaseHeight;
+
+uniform bool isUsingDaniel;
+uniform bool isUsingGavin;
+uniform bool isUsingEvan;
 
 struct Light
 {
@@ -67,6 +76,20 @@ void main() {
     vec3 V = normalize(vec3(camPos) - worldPos);
     vec3 position = worldPos;
 
+    if (isUsingDaniel) {
+        vec4 danielTexture = texture(danielSampler, outUV);
+        fragColor = danielTexture;
+        return;
+    } else if (isUsingEvan) {
+        vec4 evanTexture = texture(evanSampler, outUV);
+        fragColor = evanTexture;
+        return;
+    } else if (isUsingGavin) {
+        vec4 gavinTexture = texture(gavinSampler, outUV);
+        fragColor = gavinTexture;
+        return;
+    }
+
     for (int i = 0; i < lightsCount; i++) {
         Light light = lights[i];
 
@@ -112,7 +135,6 @@ void main() {
         }
 
         fragColor += f * I * (diffuse * diffuse_closeness + specular * specular_closeness);
-
 
 
         if (fog) {

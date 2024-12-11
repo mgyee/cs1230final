@@ -17,17 +17,29 @@ void Sphere::makeTile(glm::vec3 topLeft,
 
     insertVec3(m_vertexData, topLeft);
     insertVec3(m_vertexData, glm::normalize(topLeft));
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
     insertVec3(m_vertexData, bottomLeft);
     insertVec3(m_vertexData, glm::normalize(bottomLeft));
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
     insertVec3(m_vertexData, bottomRight);
     insertVec3(m_vertexData, glm::normalize(bottomRight));
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
 
     insertVec3(m_vertexData, bottomRight);
     insertVec3(m_vertexData, glm::normalize(bottomRight));
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
     insertVec3(m_vertexData, topRight);
     insertVec3(m_vertexData, glm::normalize(topRight));
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
     insertVec3(m_vertexData, topLeft);
     insertVec3(m_vertexData, glm::normalize(topLeft));
+    m_vertexData.push_back(0.0f);
+    m_vertexData.push_back(0.0f);
 }
 
 void Sphere::makeWedge(float currentTheta, float nextTheta) {
