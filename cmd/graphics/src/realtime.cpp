@@ -477,10 +477,10 @@ void Realtime::initializeGL() {
     m_evanImage = QImage(evan_filepath);
 
      qDebug() << "Evan image details:"
-             << "Width:" << m_gavinImage.width()
-             << "Height:" << m_gavinImage.height()
-             << "Is null:" << m_gavinImage.isNull()
-             << "Format:" << m_gavinImage.format();
+             << "Width:" << m_evanImage.width()
+             << "Height:" << m_evanImage.height()
+             << "Is null:" << m_evanImage.isNull()
+             << "Format:" << m_evanImage.format();
 
 
     // Task 2: Format image to fit OpenGL
