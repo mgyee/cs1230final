@@ -13,7 +13,7 @@ void MainWindow::initialize(QString ip) {
     realtime = new Realtime;
     realtime->ip = ip.toStdString();
     aspectRatioWidget = new AspectRatioWidget(this);
-    aspectRatioWidget->setAspectWidget(realtime, 3.f/4.f);
+    aspectRatioWidget->setAspectWidget(realtime, 4.f/4.f);
     QHBoxLayout *hLayout = new QHBoxLayout; // horizontal alignment
     QVBoxLayout *vLayout = new QVBoxLayout(); // vertical alignment
     vLayout->setAlignment(Qt::AlignTop);
@@ -29,7 +29,7 @@ void MainWindow::initialize(QString ip) {
     tesselation_label->setText("Tesselation");
     tesselation_label->setFont(font);
     QLabel *camera_label = new QLabel(); // Camera label
-    camera_label->setText("Camera");
+    camera_label->setText("Fog");
     camera_label->setFont(font);
     QLabel *filters_label = new QLabel(); // Filters label
     filters_label->setText("Filters");
@@ -44,7 +44,7 @@ void MainWindow::initialize(QString ip) {
     QLabel *near_label = new QLabel(); // Near plane label
     near_label->setText("Near Plane:");
     QLabel *far_label = new QLabel(); // Far plane label
-    far_label->setText("Far Plane:");
+    far_label->setText("Fog Density:");
 
 
 
@@ -71,7 +71,7 @@ void MainWindow::initialize(QString ip) {
     // Create file uploader for scene file
     uploadFile = new QPushButton();
     uploadFile->setText(QStringLiteral("Upload Scene File"));
-    
+
     saveImage = new QPushButton();
     saveImage->setText(QStringLiteral("Save image"));
 
@@ -121,6 +121,9 @@ void MainWindow::initialize(QString ip) {
     QGroupBox *farLayout = new QGroupBox(); // horizonal far slider alignment
     QHBoxLayout *lfar = new QHBoxLayout();
 
+    QGroupBox *fogLayout = new QGroupBox(); // horizonal far slider alignment
+    QHBoxLayout *lfog = new QHBoxLayout();
+
     // Create slider controls to control near/far planes
     nearSlider = new QSlider(Qt::Orientation::Horizontal); // Near plane slider
     nearSlider->setTickInterval(1);
@@ -146,6 +149,18 @@ void MainWindow::initialize(QString ip) {
     farBox->setSingleStep(0.1f);
     farBox->setValue(100.f);
 
+    fogSlider = new QSlider(Qt::Orientation::Horizontal); // Far plane slider
+    fogSlider->setTickInterval(1);
+    fogSlider->setMinimum(0);
+    fogSlider->setMaximum(100);
+    fogSlider->setValue(12);
+
+    fogBox = new QDoubleSpinBox();
+    fogBox->setMinimum(0.0f);
+    fogBox->setMaximum(1.0f);
+    fogBox->setSingleStep(0.1f);
+    fogBox->setValue(0.12f);
+
     // Adds the slider and number box to the parameter layouts
     lnear->addWidget(nearSlider);
     lnear->addWidget(nearBox);
@@ -154,6 +169,10 @@ void MainWindow::initialize(QString ip) {
     lfar->addWidget(farSlider);
     lfar->addWidget(farBox);
     farLayout->setLayout(lfar);
+
+    lfog->addWidget(fogSlider);
+    lfog->addWidget(fogBox);
+    fogLayout->setLayout(lfog);
 
     // Extra Credit:
     ec1 = new QCheckBox();
@@ -174,27 +193,28 @@ void MainWindow::initialize(QString ip) {
 
     vLayout->addWidget(uploadFile);
     vLayout->addWidget(saveImage);
-    vLayout->addWidget(tesselation_label);
-    vLayout->addWidget(param1_label);
-    vLayout->addWidget(p1Layout);
-    vLayout->addWidget(param2_label);
-    vLayout->addWidget(p2Layout);
+    // vLayout->addWidget(tesselation_label);
+    // vLayout->addWidget(param1_label);
+    // vLayout->addWidget(p1Layout);
+    // vLayout->addWidget(param2_label);
+    // vLayout->addWidget(p2Layout);
     vLayout->addWidget(camera_label);
-    vLayout->addWidget(near_label);
-    vLayout->addWidget(nearLayout);
-    vLayout->addWidget(far_label);
-    vLayout->addWidget(farLayout);
-    vLayout->addWidget(filters_label);
-    vLayout->addWidget(filter1);
-    vLayout->addWidget(filter2);
-    vLayout->addWidget(filter3);
     vLayout->addWidget(filter4);
+    // vLayout->addWidget(near_label);
+    // vLayout->addWidget(nearLayout);
+    vLayout->addWidget(far_label);
+    vLayout->addWidget(fogLayout);
+    vLayout->addWidget(filters_label);
+    // vLayout->addWidget(filter1);
+    // vLayout->addWidget(filter2);
+    vLayout->addWidget(filter3);
+
     // Extra Credit:
-    vLayout->addWidget(ec_label);
-    vLayout->addWidget(ec1);
-    vLayout->addWidget(ec2);
-    vLayout->addWidget(ec3);
-    vLayout->addWidget(ec4);
+    // vLayout->addWidget(ec_label);
+    // vLayout->addWidget(ec1);
+    // vLayout->addWidget(ec2);
+    // vLayout->addWidget(ec3);
+    // vLayout->addWidget(ec4);
 
     connectUIElements();
 
@@ -222,6 +242,7 @@ void MainWindow::connectUIElements() {
     connectParam1();
     connectParam2();
     connectNear();
+    connectFogDensity();
     connectFar();
     connectExtraCredit();
 }
@@ -271,6 +292,12 @@ void MainWindow::connectNear() {
 void MainWindow::connectFar() {
     connect(farSlider, &QSlider::valueChanged, this, &MainWindow::onValChangeFarSlider);
     connect(farBox, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+            this, &MainWindow::onValChangeFarBox);
+}
+
+void MainWindow::connectFogDensity() {
+    connect(fogSlider, &QSlider::valueChanged, this, &MainWindow::onValChangeFogSlider);
+    connect(fogBox, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
             this, &MainWindow::onValChangeFarBox);
 }
 
@@ -368,7 +395,17 @@ void MainWindow::onValChangeNearSlider(int newValue) {
 void MainWindow::onValChangeFarSlider(int newValue) {
     //farSlider->setValue(newValue);
     farBox->setValue(newValue/100.f);
-    settings.farPlane = farBox->value();
+    // settings.farPlane = farBox->value();
+    settings.farPlane = 100.0f;
+    realtime->settingsChanged();
+}
+
+void MainWindow::onValChangeFogSlider(int newValue) {
+    fogSlider->setValue(newValue);
+    fogBox->setValue(newValue/100.f);
+    // settings.farPlane = farBox->value();
+    // settings.farPlane = 100.0f;
+    settings.fogDensity = fogBox->value();
     realtime->settingsChanged();
 }
 
@@ -382,7 +419,16 @@ void MainWindow::onValChangeNearBox(double newValue) {
 void MainWindow::onValChangeFarBox(double newValue) {
     farSlider->setValue(int(newValue*100.f));
     //farBox->setValue(newValue);
-    settings.farPlane = farBox->value();
+    // settings.farPlane = farBox->value();
+    settings.farPlane = 100.0f;
+    realtime->settingsChanged();
+}
+
+void MainWindow::onValChangeFogBox(double newValue) {
+    fogSlider->setValue(int(newValue*100.f));
+    fogBox->setValue(newValue);
+    // settings.farPlane = farBox->value();
+    settings.fogDensity = newValue;
     realtime->settingsChanged();
 }
 

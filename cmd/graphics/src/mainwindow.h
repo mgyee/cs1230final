@@ -27,6 +27,7 @@ private:
     void connectKernelBasedFilter();
     void connectFXAA();
     void connectFog();
+    void connectFogDensity();
     void connectUploadFile();
     void connectSaveImage();
     void connectExtraCredit();
@@ -45,8 +46,10 @@ private:
     QSpinBox *p2Box;
     QSlider *nearSlider;
     QSlider *farSlider;
+    QSlider *fogSlider;
     QDoubleSpinBox *nearBox;
     QDoubleSpinBox *farBox;
+    QDoubleSpinBox *fogBox;
 
     // Extra Credit:
     QCheckBox *ec1;
@@ -65,8 +68,10 @@ private slots:
     void onValChangeP2(int newValue);
     void onValChangeNearSlider(int newValue);
     void onValChangeFarSlider(int newValue);
+    void onValChangeFogSlider(int newValue);
     void onValChangeNearBox(double newValue);
     void onValChangeFarBox(double newValue);
+    void onValChangeFogBox(double newValue);
 
     // Extra Credit:
     void onExtraCredit1();

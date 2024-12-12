@@ -152,7 +152,7 @@ private:
     int old_param1 = 0;
     int old_param2 = 0;
 
-    // Final project 
+    // Final project
     entt::registry registry;
     std::mutex registry_mutex;
 
@@ -187,10 +187,10 @@ private:
     // fog parameters
     bool m_fogEnabled = false;
     glm::vec4 m_fogColor = glm::vec4(0.9f, 0.45f, 0.3f, 1.0f);
-    float m_fogDensity = 0.12f;
-    float m_fogStart = 3.0f;
-    float m_fogEnd = 10.0f;
-    float m_fogHeight = 0.5f;
+    float m_fogDensity = 0.15f;
+    float m_fogStart = 0.0f;
+    float m_fogEnd = 200.0f;
+    float m_fogHeight = 1.5f;
     float m_fogBaseHeight = 0.5f;
 
     bool m_FXAAEnabled = false;
@@ -198,7 +198,7 @@ private:
     bool thread_started = false;
 
     bool terminate = false;
-    
+
     bool hitEvent = false;
 
     Renderable playerDefault = {};

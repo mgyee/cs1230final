@@ -884,7 +884,8 @@ void Realtime::renderSkybox() {
     glUniformMatrix4fv(glGetUniformLocation(m_skybox_shader, "projection"), 1, GL_FALSE, &m_camera.getProjMatrix()[0][0]);
     glUniform1i(glGetUniformLocation(m_skybox_shader, "fog"), m_fogEnabled);
     glUniform4fv(glGetUniformLocation(m_skybox_shader, "fogColor"), 1, &m_fogColor[0]);
-    glUniform1f(glGetUniformLocation(m_skybox_shader, "fogDensity"), m_fogDensity);
+    std::cout << "Fog density is " << settings.fogDensity << "\n";
+    glUniform1f(glGetUniformLocation(m_skybox_shader, "fogDensity"), settings.fogDensity);
 
 
     // Bind cubemap
@@ -947,6 +948,7 @@ void Realtime::resizeGL(int w, int h) {
 
 void Realtime::sceneChanged() {
 
+    // settings.farPlane = 1.0f;
     SceneParser::parse(settings.sceneFilePath, metaData);
     // m_camera = Camera(metaData.cameraData.pos, metaData.cameraData.look, metaData.cameraData.up,
     //                 aspectRatio,
@@ -1102,6 +1104,7 @@ void Realtime::updateVBO() {
 }
 
 void Realtime::settingsChanged() {
+    // settings.farPlane = 1.0f;
     m_camera.setProjMatrix(settings.nearPlane, settings.farPlane);
     if (old_param1 != settings.shapeParameter1 || old_param2 != settings.shapeParameter2) {
         old_param1 = settings.shapeParameter1;
